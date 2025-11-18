@@ -192,217 +192,193 @@
 
       <!-- === Products: All Products === -->
       <section id="view-products-all" class="view hidden">
-        <div class="page page-products">
-          <!-- Header -->
-          <div class="page-header">
-            <div class="page-header-main">
-              <h2>สินค้าทั้งหมด</h2>
-              <p class="page-subtitle">
-                จัดการรายการสินค้า ตัวเลือกสี / ลาย / ไซซ์ และสต็อกคงเหลือในที่เดียว
-              </p>
-            </div>
-            <div class="page-actions">
-              <button id="pd-btn-add-product" class="btn primary">
-                + เพิ่มสินค้า
-              </button>
-            </div>
+        <div class="page-header">
+          <h2>สินค้าทั้งหมด</h2>
+          <div class="page-actions">
+            <button id="pd-btn-add-product" class="btn primary">+ เพิ่มสินค้า</button>
           </div>
+        </div>
 
-          <!-- Filters in a compact card -->
-          <div class="card filters-card">
-            <div class="toolbar toolbar--dense">
-              <div class="toolbar-left">
-                <label class="field full-on-mobile">
-                  <span>ค้นหาสินค้า</span>
-                  <input
-                    id="pd-search"
-                    class="input"
-                    placeholder="พิมพ์ชื่อสินค้า, SKU หรือบาร์โค้ด"
-                  />
-                </label>
-                <label class="field">
-                  <span>หมวดหมู่</span>
-                  <select id="pd-filter-category" class="input">
-                    <option value="">ทั้งหมด</option>
-                  </select>
-                </label>
-                <label class="field">
-                  <span>สถานะ</span>
-                  <select id="pd-filter-status" class="input">
-                    <option value="">ทั้งหมด</option>
-                    <option value="active">เปิดขาย</option>
-                    <option value="draft">ฉบับร่าง</option>
-                    <option value="hidden">ซ่อน</option>
-                  </select>
-                </label>
-              </div>
-              <div class="toolbar-right">
-                <button id="pd-btn-reload" class="btn ghost">
-                  รีโหลดรายการ
-                </button>
-              </div>
-            </div>
+        <!-- Filters -->
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <label class="field">
+              <span>ค้นหาสินค้า</span>
+              <input id="pd-search" class="input" placeholder="พิมพ์ชื่อสินค้า, SKU หรือบาร์โค้ด" />
+            </label>
+            <label class="field">
+              <span>หมวดหมู่</span>
+              <select id="pd-filter-category" class="input">
+                <option value="">ทั้งหมด</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>สถานะ</span>
+              <select id="pd-filter-status" class="input">
+                <option value="">ทั้งหมด</option>
+                <option value="active">เปิดขาย</option>
+                <option value="draft">ฉบับร่าง</option>
+                <option value="hidden">ซ่อน</option>
+              </select>
+            </label>
           </div>
+          <div class="toolbar-right">
+            <button id="pd-btn-reload" class="btn ghost">รีโหลด</button>
+          </div>
+        </div>
 
-          <!-- Table card -->
-          <div class="card table-card">
-            <div class="card-header-inline">
-              <div>
-                <h3 class="card-title">รายการสินค้าในระบบ</h3>
-                <p class="muted small">
-                  เมื่อเพิ่มสินค้าพร้อมตัวเลือกแล้ว รายการตัวแปรทั้งหมดจะถูกแสดงในตารางนี้
-                </p>
-              </div>
-            </div>
-
-            <div class="table-wrapper">
-              <table class="table" id="pd-table">
-                <thead>
-                  <tr>
-                    <th style="width: 40px;"></th>
-                    <th>สินค้า</th>
-                    <th>ตัวเลือก</th>
-                    <th>ราคา (฿)</th>
-                    <th>สต็อก</th>
-                    <th>ขายแล้ว</th>
-                    <th>หมวดหมู่</th>
-                    <th>สถานะ</th>
-                    <th style="width: 80px;">จัดการ</th>
-                  </tr>
-                </thead>
-                <tbody id="pd-tbody">
-                  <!-- products.js จะเติมข้อมูลให้ -->
-                </tbody>
-              </table>
-            </div>
-            <div class="table-footer">
-              <div id="pd-summary" class="muted">
-                รวม 0 รายการ • สต็อกคงเหลือ 0 ชิ้น
-              </div>
+        <!-- Table -->
+        <div class="card">
+          <div class="table-wrapper">
+            <table class="table" id="pd-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;"></th>
+                  <th>สินค้า</th>
+                  <th>ตัวเลือก</th>
+                  <th>ราคา (฿)</th>
+                  <th>สต็อก</th>
+                  <th>ขายแล้ว</th>
+                  <th>หมวดหมู่</th>
+                  <th>สถานะ</th>
+                  <th style="width: 80px;">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="pd-tbody">
+                <!-- products.js จะเติมข้อมูลให้ -->
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <div id="pd-summary" class="muted">
+              รวม 0 รายการ • สต็อกคงเหลือ 0 ชิ้น
             </div>
           </div>
         </div>
 
-        <!-- Drawer / Modal: Add / Edit Product -->
+        <!-- Drawer / Modal: Add / Edit Product (เวอร์ชันย่อแบบพับได้) -->
         <div id="pd-modal" class="drawer hidden" aria-hidden="true">
           <div class="drawer-backdrop"></div>
           <div class="drawer-panel">
             <header class="drawer-header">
-              <div>
-                <h3 id="pd-modal-title">เพิ่มสินค้า</h3>
-                <p class="muted small">
-                  กรอกข้อมูลสินค้าและตัวเลือกให้ครบถ้วน ระบบจะสร้างตัวแปรสินค้าให้อัตโนมัติ
-                </p>
-              </div>
+              <h3 id="pd-modal-title">เพิ่มสินค้า</h3>
               <button class="icon-btn" id="pd-modal-close" aria-label="ปิด">
                 ✕
               </button>
             </header>
 
             <div class="drawer-body">
-              <!-- Step 1: ข้อมูลหลักของสินค้า -->
-              <section class="drawer-section">
-                <h4>ข้อมูลสินค้า</h4>
-                <div class="form-grid">
-                  <label class="full">
-                    ชื่อสินค้า
-                    <input id="pd-name" class="input" />
-                  </label>
-                  <label>
-                    SKU หลัก
-                    <input id="pd-sku" class="input" />
-                  </label>
-                  <label>
-                    บาร์โค้ด
-                    <input id="pd-barcode" class="input" />
-                  </label>
-                  <label>
-                    หมวดหมู่
-                    <input
-                      id="pd-category"
-                      class="input"
-                      placeholder="เช่น เสื้อยืด, แก้วน้ำ"
-                    />
-                  </label>
-                  <label class="full">
-                    หมายเหตุ
-                    <textarea id="pd-note" class="input" rows="2"></textarea>
-                  </label>
-                </div>
-              </section>
 
-              <!-- Step 2: ตัวเลือกสินค้า (สี / ลาย + ไซซ์) -->
-              <section class="drawer-section">
-                <h4>ตัวเลือกสินค้า</h4>
-                <p class="muted small">
-                  ระบบรองรับ 2 ชั้นของตัวเลือก เช่น ชั้นที่ 1 = สี หรือ ลายเสื้อ,
-                  ชั้นที่ 2 = ไซซ์
-                </p>
+              <!-- Block 1: ข้อมูลสินค้า -->
+              <details class="drawer-section" open>
+                <summary>
+                  <span>ข้อมูลสินค้า</span>
+                  <span class="summary-sub">ตั้งชื่อสินค้า, SKU, หมวดหมู่ และหมายเหตุ</span>
+                </summary>
 
-                <div class="variant-config">
-                  <div class="variant-row">
-                    <label>
-                      ชื่อคุณลักษณะชั้นที่ 1
-                      <input
-                        id="pd-attr1-name"
-                        class="input"
-                        value="สี"
-                      />
+                <div class="drawer-section-body">
+                  <div class="form-grid">
+                    <label class="full">
+                      ชื่อสินค้า
+                      <input id="pd-name" class="input" />
                     </label>
                     <label>
-                      ค่า (คั่นด้วย ,)
-                      <input
-                        id="pd-attr1-values"
-                        class="input"
-                        placeholder="เช่น แดง, น้ำเงิน, เขียว"
-                      />
-                    </label>
-                  </div>
-                  <div class="variant-row">
-                    <label>
-                      ชื่อคุณลักษณะชั้นที่ 2
-                      <input
-                        id="pd-attr2-name"
-                        class="input"
-                        value="ไซซ์"
-                      />
+                      SKU หลัก
+                      <input id="pd-sku" class="input" />
                     </label>
                     <label>
-                      ค่า (คั่นด้วย ,)
-                      <input
-                        id="pd-attr2-values"
-                        class="input"
-                        placeholder="เช่น S, M, L, XL"
-                      />
+                      บาร์โค้ด
+                      <input id="pd-barcode" class="input" />
                     </label>
-                  </div>
-                  <div class="variant-actions">
-                    <button id="pd-generate-variants" class="btn ghost">
-                      สร้างตัวแปรสินค้า
-                    </button>
+                    <label>
+                      หมวดหมู่
+                      <input id="pd-category" class="input" placeholder="เช่น เสื้อยืด, แก้วน้ำ" />
+                    </label>
+                    <label class="full">
+                      หมายเหตุ
+                      <textarea id="pd-note" class="input" rows="2"></textarea>
+                    </label>
                   </div>
                 </div>
+              </details>
 
-                <div class="card variant-table-wrapper">
-                  <div class="table-wrapper">
-                    <table class="table small" id="pd-variant-table">
-                      <thead>
-                        <tr>
-                          <th>ตัวเลือก 1</th>
-                          <th>ตัวเลือก 2</th>
-                          <th>SKU</th>
-                          <th>ราคา (฿)</th>
-                          <th>สต็อกเริ่มต้น</th>
-                          <th>บาร์โค้ด</th>
-                        </tr>
-                      </thead>
-                      <tbody id="pd-variant-tbody">
-                        <!-- products.js จะสร้างแถวตามตัวเลือก -->
-                      </tbody>
-                    </table>
+              <!-- Block 2: ตัวเลือกสินค้า -->
+              <details class="drawer-section" open>
+                <summary>
+                  <span>ตัวเลือกสินค้า</span>
+                  <span class="summary-sub">กำหนดสี / ลาย และไซซ์ เพื่อสร้างตัวแปรสินค้าอัตโนมัติ</span>
+                </summary>
+
+                <div class="drawer-section-body">
+                  <p class="muted small">
+                    ระบบรองรับ 2 ชั้นของตัวเลือก เช่น ชั้นที่ 1 = สี หรือ ลายเสื้อ, ชั้นที่ 2 = ไซซ์
+                  </p>
+
+                  <div class="variant-config">
+                    <div class="variant-row">
+                      <label>
+                        ชื่อคุณลักษณะชั้นที่ 1
+                        <input id="pd-attr1-name" class="input" value="สี" />
+                      </label>
+                      <label>
+                        ค่า (คั่นด้วย ,)
+                        <input id="pd-attr1-values" class="input" placeholder="เช่น แดง, น้ำเงิน, เขียว" />
+                      </label>
+                    </div>
+                    <div class="variant-row">
+                      <label>
+                        ชื่อคุณลักษณะชั้นที่ 2
+                        <input id="pd-attr2-name" class="input" value="ไซซ์" />
+                      </label>
+                      <label>
+                        ค่า (คั่นด้วย ,)
+                        <input id="pd-attr2-values" class="input" placeholder="เช่น S, M, L, XL" />
+                      </label>
+                    </div>
+                    <div class="variant-actions">
+                      <button id="pd-generate-variants" class="btn ghost">
+                        สร้างตัวแปรสินค้า
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </section>
+              </details>
+
+              <!-- Block 3: ตารางตัวแปรสินค้า -->
+              <details class="drawer-section" open>
+                <summary>
+                  <span>ตัวแปรสินค้า</span>
+                  <span class="summary-sub">
+                    ตั้งราคา, สต็อก และบาร์โค้ดของแต่ละตัวเลือก
+                  </span>
+                </summary>
+
+                <div class="drawer-section-body">
+                  <div class="muted small" style="margin-bottom: 0.5rem;">
+                    ตัวแปรทั้งหมด: <span id="pd-variant-count">0</span> แบบ
+                  </div>
+
+                  <div class="card variant-table-wrapper">
+                    <div class="table-wrapper">
+                      <table class="table small" id="pd-variant-table">
+                        <thead>
+                          <tr>
+                            <th>ตัวเลือก 1</th>
+                            <th>ตัวเลือก 2</th>
+                            <th>SKU</th>
+                            <th>ราคา (฿)</th>
+                            <th>สต็อกเริ่มต้น</th>
+                            <th>บาร์โค้ด</th>
+                          </tr>
+                        </thead>
+                        <tbody id="pd-variant-tbody">
+                          <!-- products.js จะสร้างแถวตามตัวเลือก -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </details>
             </div>
 
             <footer class="drawer-footer">

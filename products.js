@@ -66,7 +66,7 @@ async function loadProductsAll() {
         const ordered = [];
         const color = a.color || a['สี'];
         const size = a.size || a['ไซส์'];
-        const style = a.style || a['สไตล์'];
+        const style = a.style || a['สไตล์'] || a['ลาย'] || a['ลายเสื้อ'];
         if (color) ordered.push(String(color));
         if (size) ordered.push(String(size));
         if (style) ordered.push(String(style));
@@ -200,6 +200,15 @@ function ap_getCfg() {
 function ap_open() {
   const m = document.getElementById('addProductModal');
   if (!m) return;
+
+  // รีเซ็ตฟอร์มทุกครั้งที่เปิด popup
+  const form = document.getElementById('addProductForm');
+  if (form) {
+    form.reset();
+    const idInput = document.getElementById('ap_product_id');
+    if (idInput) idInput.value = '';
+  }
+
   m.classList.add('show-modal');
   m.setAttribute('aria-hidden', 'false');
 }
@@ -528,9 +537,10 @@ window.addEventListener('load', () => {
 
 // ===== hook router: เวลาเข้า #/products/all ให้โหลดสินค้าทุกครั้ง =====
 (function hookProductsRoute() {
-  const _render = window.render;
+  const originalRender =
+    typeof window.render === 'function' ? window.render : function () {};
   window.render = function () {
-    _render();
+    originalRender();
     const hash = location.hash || '#/overview';
     if (hash === '#/products/all') {
       if (typeof loadProductsAll === 'function') loadProductsAll();
