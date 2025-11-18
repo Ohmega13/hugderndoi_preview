@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HUGDERNDOI | Dashboard</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="./assets/css/base.css">
+  <link rel="stylesheet" href="./assets/css/dashboard.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" stroke="#fff" stroke-opacity=".9" stroke-width="1.4"/>
+            <circle cx="12" cy="12" r="2.6" fill="#fff" fill-opacity=".9"/>
+          </svg>
+        </div>
+        <h1>HUGDERNDOI</h1>
+      </div>
+
+      <nav class="nav">
+        <a class="active" href="#/overview">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M3 12l9-8 9 8v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-8z" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+          <span>ภาพรวม</span>
+        </a>
+
+        <details class="menu-group" open>
+          <summary>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>ออเดอร์</span>
+            <svg class="caret" viewBox="0 0 24 24" fill="none"><path d="M8 10l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="submenu">
+            <a href="#/orders/all">รายการทั้งหมด</a>
+            <a href="#/orders/pending">รอชำระ</a>
+            <a href="#/orders/pack">พร้อมแพ็ก</a>
+            <a href="#/orders/shipped">ส่งแล้ว</a>
+            <a href="#/orders/canceled">ยกเลิก</a>
+          </div>
+        </details>
+
+        <details class="menu-group">
+          <summary>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16" stroke="currentColor" stroke-width="1.6"/></svg>
+            <span>สินค้า</span>
+            <svg class="caret" viewBox="0 0 24 24" fill="none"><path d="M8 10l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="submenu">
+            <a href="#/products/all">สินค้าทั้งหมด</a>
+            <a href="#/products/in">รับเข้าสต็อก</a>
+            <a href="#/products/adjust">ปรับสต็อก</a>
+            <a href="#/products/low">แจ้งเตือนสต็อกต่ำ</a>
+          </div>
+        </details>
+
+        <details class="menu-group">
+          <summary>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 21a9 9 0 0 1 18 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>ลูกค้า</span>
+            <svg class="caret" viewBox="0 0 24 24" fill="none"><path d="M8 10l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="submenu">
+            <a href="#/customers/list">รายชื่อลูกค้า</a>
+            <a href="#/customers/vip">ลูกค้า VIP</a>
+            <a href="#/customers/nvrs">ลูกค้าใหม่ vs เก่า</a>
+          </div>
+        </details>
+
+        <details class="menu-group">
+          <summary>
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M5 20h14a3 3 0 0 0 0-6H5a3 3 0 0 0 0 6z" stroke="currentColor" stroke-width="1.6"/></svg>
+            <span>ค่าใช้จ่าย</span>
+            <svg class="caret" viewBox="0 0 24 24" fill="none"><path d="M8 10l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="submenu">
+            <a href="#/expenses/add">บันทึกรายจ่าย</a>
+            <a href="#/expenses/share">สัดส่วนค่าใช้จ่าย</a>
+          </div>
+        </details>
+
+        <a href="#/summary">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16M10 4v16" stroke="currentColor" stroke-width="1.6"/></svg>
+          <span>สรุปยอด</span>
+        </a>
+
+        <a href="#/settings">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" stroke="currentColor" stroke-width="1.6"/><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1 1 0 0 1-1.4 1.4l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V19a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-.6 1 1 0 0 0-.9-.6 1 1 0 0 0-.9.6 1 1 0 0 1-1 .6H8a1 1 0 0 1-1-1v-.1a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1A1 1 0 1 1 3.8 16l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H3a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-.9 1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1A1 1 0 1 1 5 6.4l.1.1a1 1 0 0 0 1.1.2h.1A1 1 0 0 0 6.9 6V6a1 1 0 0 1 1-1h1a1 1 0 0 1 1 .6 1 1 0 0 0 .9.6 1 1 0 0 0 .9-.6 1 1 0 0 1 1-.6h1a1 1 0 0 1 1 1v.1a1 1 0 0 0 .6.9h.1a1 1 0 0 0 1.1-.2l.1-.1A1 1 0 1 1 20.2 8l-.1.1a1 1 0 0 0-.2 1.1v.1a1 1 0 0 0 .9.6H21a1 1 0 0 1 1 1v1a1 1 0 0 1-1 .9h-.1a1 1 0 0 0-.9.6z" stroke="currentColor" stroke-width="1.2"/></svg>
+          <span>ตั้งค่า</span>
+        </a>
+      </nav>
+
+      <div class="logout">
+        <a href="#" class="nav-item logout-link">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M10 17l5-5-5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M15 12H3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M21 4v16a2 2 0 0 1-2 2h-7" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+          <span>ออกจากระบบ</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="topbar">
+        <div class="title" id="page-title">ภาพรวม</div>
+        <div class="avatar" aria-label="user"></div>
+      </div>
+
+      <!-- === Overview View === -->
+      <section id="view-overview" class="view">
+        <section class="grid stats">
+          <div class="card col-4">
+            <h3>ยอดขายทั้งหมด</h3>
+            <div class="metric">
+              <div id="ov_total_revenue" class="value">฿0.00</div>
+              <span class="badge b-blue">+0.0%</span>
+            </div>
+          </div>
+          <div class="card col-4">
+            <h3>ออเดอร์ทั้งหมด</h3>
+            <div class="metric">
+              <div id="ov_total_orders" class="value">0</div>
+              <span class="badge b-violet">0 ใบ</span>
+            </div>
+          </div>
+          <div class="card col-4">
+            <h3>ยอดขายวันนี้</h3>
+            <div class="metric">
+              <div id="ov_today_revenue" class="value">฿0.00</div>
+              <span class="badge b-green">วันนี้</span>
+            </div>
+          </div>
+
+          <div class="card col-3">
+            <h3>ออเดอร์ใหม่ (รอชำระ)</h3>
+            <div class="metric">
+              <div id="ov_pending_count" class="value">0</div>
+              <span class="badge b-amber">ค้างชำระ</span>
+            </div>
+          </div>
+          <div class="card col-3">
+            <h3>ที่ต้องจัดส่ง</h3>
+            <div class="metric">
+              <div id="ov_pack_count" class="value">0</div>
+              <span class="badge b-blue">พร้อมแพ็ก</span>
+            </div>
+          </div>
+          <div class="card col-6 low-stock-card">
+            <h3>จำนวนตัวแปรสต็อกต่ำ</h3>
+            <div class="metric">
+              <div id="ov_low_stock_count" class="value">0 รายการ</div>
+              <span class="badge b-red">ตรวจสอบคลัง</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="grid charts-2col">
+          <div class="card col-6">
+            <div class="panel-title">ยอดขาย 7 วันล่าสุด</div>
+            <canvas id="sales7"></canvas>
+          </div>
+          <div class="card col-6">
+            <div class="panel-title">5 อันดับสินค้าขายดี (ตามจำนวน)</div>
+            <canvas id="top5"></canvas>
+          </div>
+          <div class="card col-3">
+            <div class="panel-title">สัดส่วนค่าใช้จ่าย</div>
+            <canvas id="costPie"></canvas>
+          </div>
+          <div class="card col-6">
+            <div class="panel-title">กราฟค่าใช้จ่าย (14 วัน)</div>
+            <canvas id="costTrend"></canvas>
+          </div>
+        </section>
+      </section>
+
+      <!-- === Orders / Products / Customers / Expenses / Summary / Settings === -->
+      <!-- NOTE: โอห์มเอา section ของแต่ละหน้า จากไฟล์เดิมมาแปะเพิ่มได้เลย -->
+
+      <section id="view-settings" class="view hidden">
+        <div class="card">
+          <div class="panel-title">ตั้งค่าการเชื่อมต่อ</div>
+          <div class="form-grid">
+            <label>
+              โหมด Backend
+              <select id="backendMode" class="input">
+                <option value="apps-script">Google Apps Script</option>
+              </select>
+            </label>
+            <label>
+              Spreadsheet ID
+              <input id="spreadsheetId" class="input" placeholder="เช่น 1AbCdEf..." />
+            </label>
+            <label>
+              Apps Script URL
+              <input id="appsScriptUrl" class="input" placeholder="https://script.google.com/macros/s/..." />
+            </label>
+            <label>
+              API Key (ถ้ามี)
+              <input id="apiKey" class="input" placeholder="ใส่ถ้ามี" />
+            </label>
+            <label>
+              API Token
+              <input id="apiToken" class="input" placeholder="โทเคนสำหรับตรวจสอบสิทธิ์" />
+            </label>
+            <label class="full">
+              Sheet Map (JSON)
+              <textarea id="sheetMap" class="input" rows="4" placeholder='{"Orders":"Orders","Customers":"Customers"}'></textarea>
+            </label>
+            <label class="full">
+              หมายเหตุ
+              <textarea id="settingsNote" class="input" rows="2" placeholder="โน้ตการตั้งค่าเพิ่มเติม"></textarea>
+            </label>
+          </div>
+          <div class="actions">
+            <button id="btnSaveSettings" class="btn primary">บันทึกการตั้งค่า</button>
+            <button id="btnTestConn" class="btn ghost">ทดสอบการเชื่อมต่อ</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" style="display:none"></div>
+  <div class="ribbon">เมื่อเทียบกับเดือนก่อนหน้า: ยอดขาย 0.0% • ออเดอร์ 0 ใบ • ต้นทุน 0.0%</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <script src="./assets/js/api.js"></script>
+  <script src="./assets/js/settings.js"></script>
+  <script src="./assets/js/router.js"></script>
+  <script src="./assets/js/overview.js"></script>
+  <script src="./assets/js/customers.js"></script>
+  <script src="./assets/js/expenses.js"></script>
+  <script src="./assets/js/products.js"></script>
+  <script src="./assets/js/main.js"></script>
+</body>
+</html>
