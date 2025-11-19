@@ -256,27 +256,24 @@
           </div>
         </div>
 
-        <!-- Drawer / Modal: Add / Edit Product (เวอร์ชันย่อแบบพับได้) -->
-        <div id="pd-modal" class="drawer hidden" aria-hidden="true">
-          <div class="drawer-backdrop"></div>
-          <div class="drawer-panel">
-            <header class="drawer-header">
+        <!-- Popup: Add / Edit Product -->
+        <div id="pd-modal" class="modal-overlay hidden" aria-hidden="true">
+          <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="pd-modal-title">
+            <header class="modal-header">
               <h3 id="pd-modal-title">เพิ่มสินค้า</h3>
               <button class="icon-btn" id="pd-modal-close" aria-label="ปิด">
                 ✕
               </button>
             </header>
 
-            <div class="drawer-body">
-
+            <div class="modal-body">
               <!-- Block 1: ข้อมูลสินค้า -->
-              <details class="drawer-section" open>
-                <summary>
-                  <span>ข้อมูลสินค้า</span>
-                  <span class="summary-sub">ตั้งชื่อสินค้า, SKU, หมวดหมู่ และหมายเหตุ</span>
-                </summary>
-
-                <div class="drawer-section-body">
+              <section class="modal-section">
+                <header class="modal-section-header">
+                  <div class="modal-section-title">ข้อมูลสินค้า</div>
+                  <div class="modal-section-sub">ตั้งชื่อสินค้า, SKU, หมวดหมู่ และหมายเหตุ</div>
+                </header>
+                <div class="modal-section-body">
                   <div class="form-grid">
                     <label class="full">
                       ชื่อสินค้า
@@ -300,16 +297,15 @@
                     </label>
                   </div>
                 </div>
-              </details>
+              </section>
 
               <!-- Block 2: ตัวเลือกสินค้า -->
-              <details class="drawer-section" open>
-                <summary>
-                  <span>ตัวเลือกสินค้า</span>
-                  <span class="summary-sub">กำหนดสี / ลาย และไซซ์ เพื่อสร้างตัวแปรสินค้าอัตโนมัติ</span>
-                </summary>
-
-                <div class="drawer-section-body">
+              <section class="modal-section">
+                <header class="modal-section-header">
+                  <div class="modal-section-title">ตัวเลือกสินค้า</div>
+                  <div class="modal-section-sub">กำหนดสี / ลาย และไซซ์ เพื่อสร้างตัวแปรสินค้าอัตโนมัติ</div>
+                </header>
+                <div class="modal-section-body">
                   <p class="muted small">
                     ระบบรองรับ 2 ชั้นของตัวเลือก เช่น ชั้นที่ 1 = สี หรือ ลายเสื้อ, ชั้นที่ 2 = ไซซ์
                   </p>
@@ -342,18 +338,15 @@
                     </div>
                   </div>
                 </div>
-              </details>
+              </section>
 
               <!-- Block 3: ตารางตัวแปรสินค้า -->
-              <details class="drawer-section" open>
-                <summary>
-                  <span>ตัวแปรสินค้า</span>
-                  <span class="summary-sub">
-                    ตั้งราคา, สต็อก และบาร์โค้ดของแต่ละตัวเลือก
-                  </span>
-                </summary>
-
-                <div class="drawer-section-body">
+              <section class="modal-section">
+                <header class="modal-section-header">
+                  <div class="modal-section-title">ตัวแปรสินค้า</div>
+                  <div class="modal-section-sub">ตั้งราคา, สต็อก และบาร์โค้ดของแต่ละตัวเลือก</div>
+                </header>
+                <div class="modal-section-body">
                   <div class="muted small" style="margin-bottom: 0.5rem;">
                     ตัวแปรทั้งหมด: <span id="pd-variant-count">0</span> แบบ
                   </div>
@@ -378,10 +371,10 @@
                     </div>
                   </div>
                 </div>
-              </details>
+              </section>
             </div>
 
-            <footer class="drawer-footer">
+            <footer class="modal-footer">
               <button class="btn ghost" id="pd-modal-cancel">ยกเลิก</button>
               <button class="btn primary" id="pd-modal-save">บันทึกสินค้า</button>
             </footer>
@@ -438,13 +431,13 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-  <script src="./assets/js/api.js"></script>
-  <script src="./assets/js/settings.js"></script>
-  <script src="./assets/js/router.js"></script>
-  <script src="./assets/js/overview.js"></script>
-  <script src="./assets/js/customers.js"></script>
-  <script src="./assets/js/expenses.js"></script>
-  <script src="./assets/js/products.js"></script>
-  <script src="./assets/js/main.js"></script>
+  <script src="./js/api.js"></script>
+  <script src="./js/settings.js"></script>
+  <script src="./js/router.js"></script>
+  <script src="./js/overview.js"></script>
+  <script src="./js/customers.js"></script>
+  <script src="./js/expenses.js"></script>
+  <script src="./js/products.js"></script>
+  <script src="./js/main.js"></script>
 </body>
 </html>
