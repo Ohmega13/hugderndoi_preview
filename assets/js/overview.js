@@ -1,187 +1,145 @@
-// overview.js — โหลดยอดขาย/ค่าใช้จ่าย + chart
+// products.js — เพิ่มสินค้า + popup + generate variants
 
-const textColor = getComputedStyle(document.documentElement)
-  .getPropertyValue('--text').trim() || '#e5e7eb';
-
-function ov_cfg(){
-  try{ return JSON.parse(localStorage.getItem('hug_settings_v1')||'{}'); }
-  catch{ return {}; }
-}
-async function ov_fetch(table){
-  const cfg = ov_cfg();
-  if(!cfg.appsScriptUrl || !cfg.apiToken) return { ok:false, rows:[] };
-  const url = `${cfg.appsScriptUrl}?table=${encodeURIComponent(table)}&token=${encodeURIComponent(cfg.apiToken)}`;
-  const res = await fetch(url);
-  return res.json();
-}
-function ov_thb(n){ return '฿' + Number(n||0).toLocaleString(); }
-
-const OV_CHARTS = { sales7:null, top5:null, costPie:null, costTrend:null };
-
-function ov_set(id, value){
-  const el = document.getElementById(id);
-  if(el) el.textContent = value;
-}
-function ov_lastNDays(n){
-  const days = [];
-  const names = ['อา','จ','อ','พ','พฤ','ศ','ส'];
-  const today = new Date();
-  for(let i=n-1;i>=0;i--){
-    const d = new Date(today);
-    d.setDate(d.getDate()-i);
-    days.push({ key: d.toISOString().slice(0,10), label: names[d.getDay()] });
-  }
-  return days;
-}
-function ov_destroyChart(inst){
-  try{ if(inst && typeof inst.destroy==='function') inst.destroy(); }catch(_){}
-  return null;
-}
-
-async function ov_reload(){
-  const [oRes, eRes, vRes] = await Promise.all([
-    ov_fetch('Orders'),
-    ov_fetch('Expenses'),
-    ov_fetch('ProductVariants')
-  ]);
-  const orders = (oRes && oRes.ok && oRes.rows) || [];
-  const expenses = (eRes && eRes.ok && eRes.rows) || [];
-  const variants = (vRes && vRes.ok && vRes.rows) || [];
-
-  const totalOrders = orders.length;
-  const totalRevenue = orders.reduce((s,o)=>{
-    const st = String(o.status||'').trim();
-    if(st==='ยกเลิก') return s;
-    const v = Number(o.total_amount||0);
-    return s + (isFinite(v)?v:0);
-  },0);
-  const todayKey = (new Date()).toISOString().slice(0,10);
-  const todayRevenue = orders.reduce((s,o)=>{
-    const st = String(o.status||'').trim();
-    if(st==='ยกเลิก') return s;
-    const d = String(o.order_date||'').slice(0,10);
-    if(d!==todayKey) return s;
-    const v = Number(o.total_amount||0);
-    return s + (isFinite(v)?v:0);
-  },0);
-  const pendingCount = orders.filter(o => String(o.status||'').trim()==='รอชำระ').length;
-  const packCount = orders.filter(o => String(o.status||'').trim()==='พร้อมแพ็ก').length;
-  const lowStockCount = variants.filter(v=>{
-    const q = Number(v.quantity_on_hand||0);
-    const r = Number(v.reorder_point||0);
-    return isFinite(q) && isFinite(r) && q <= r;
-  }).length;
-
-  ov_set('ov_total_revenue', ov_thb(totalRevenue));
-  ov_set('ov_total_orders', String(totalOrders));
-  ov_set('ov_today_revenue', ov_thb(todayRevenue));
-  ov_set('ov_pending_count', String(pendingCount));
-  ov_set('ov_pack_count', String(packCount));
-  ov_set('ov_low_stock_count', String(lowStockCount));
-
-  // Sales last 7 days
-  try{
-    const last7 = ov_lastNDays(7);
-    const map = Object.create(null);
-    last7.forEach(d => map[d.key]=0);
-    orders.forEach(o=>{
-      const st = String(o.status||'').trim();
-      if(st==='ยกเลิก') return;
-      const k = String(o.order_date||'').slice(0,10);
-      if(map[k]===undefined) return;
-      const v = Number(o.total_amount||0);
-      map[k] += isFinite(v)?v:0;
-    });
-    const labels = last7.map(d=>d.label);
-    const data = last7.map(d=>map[d.key]);
-    const ctx = document.getElementById('sales7');
-    if(ctx && window.Chart){
-      OV_CHARTS.sales7 = ov_destroyChart(OV_CHARTS.sales7);
-      OV_CHARTS.sales7 = new Chart(ctx, {
-        type:'line',
-        data:{ labels, datasets:[{ label:'ยอดขาย (฿)', data, tension:.35, borderWidth:2 }] },
-        options:{ plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ color:textColor } }, y:{ ticks:{ color:textColor }, grid:{ color:'rgba(255,255,255,.06)' } } } }
-      });
-    }
-  }catch(err){ console.warn('sales7 error', err); }
-
-  // Top 5
-  try{
-    const oiRes = await ov_fetch('Order_Items');
-    const items = (oiRes && oiRes.ok && oiRes.rows) || [];
-    const qtyMap = new Map();
-    items.forEach(it=>{
-      const sku = it.sku_variant || it.sku || '—';
-      const q = Number(it.qty||0);
-      qtyMap.set(sku, (qtyMap.get(sku)||0) + (isFinite(q)?q:0));
-    });
-    const top = Array.from(qtyMap.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5);
-    const labels = top.length ? top.map(x=>x[0]) : ['SKU-A','SKU-B','SKU-C','SKU-D','SKU-E'];
-    const data = top.length ? top.map(x=>x[1]) : [0,0,0,0,0];
-    const ctx = document.getElementById('top5');
-    if(ctx && window.Chart){
-      OV_CHARTS.top5 = ov_destroyChart(OV_CHARTS.top5);
-      OV_CHARTS.top5 = new Chart(ctx, {
-        type:'bar',
-        data:{ labels, datasets:[{ label:'จำนวนขาย', data }] },
-        options:{ plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ color:textColor } }, y:{ ticks:{ color:textColor }, grid:{ color:'rgba(255,255,255,.06)' } } } }
-      });
-    }
-  }catch(err){ console.warn('top5 error', err); }
-
-  // Expense share
-  try{
-    const catMap = new Map();
-    expenses.forEach(x=>{
-      const k = (x.category || 'อื่น ๆ').toString();
-      const v = Number(x.amount||0);
-      catMap.set(k, (catMap.get(k)||0) + (isFinite(v)?v:0));
-    });
-    const labels = Array.from(catMap.keys());
-    const data = Array.from(catMap.values());
-    const ctx = document.getElementById('costPie');
-    if(ctx && window.Chart){
-      OV_CHARTS.costPie = ov_destroyChart(OV_CHARTS.costPie);
-      OV_CHARTS.costPie = new Chart(ctx, {
-        type:'doughnut',
-        data:{ labels, datasets:[{ data }] },
-        options:{ plugins:{ legend:{ labels:{ color:textColor } } } }
-      });
-    }
-  }catch(err){ console.warn('pie error', err); }
-
-  // Expense trend 14 days
-  try{
-    const lastN = ov_lastNDays(14);
-    const map = Object.create(null);
-    lastN.forEach(d=>map[d.key]=0);
-    expenses.forEach(x=>{
-      const k = String(x.date || '').slice(0,10);
-      const v = Number(x.amount || 0);
-      if(map[k] !== undefined && isFinite(v)) map[k] += v;
-    });
-    const labels = lastN.map(d=>d.label);
-    const data = lastN.map(d=>map[d.key]);
-    const ctx = document.getElementById('costTrend');
-    if(ctx && window.Chart){
-      OV_CHARTS.costTrend = ov_destroyChart(OV_CHARTS.costTrend);
-      OV_CHARTS.costTrend = new Chart(ctx, {
-        type:'line',
-        data:{ labels, datasets:[{ label:'ค่าใช้จ่าย (฿)', data, tension:.35, borderWidth:2 }] },
-        options:{ plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ color:textColor } }, y:{ ticks:{ color:textColor }, grid:{ color:'rgba(255,255,255,.06)' } } } }
-      });
-    }
-  }catch(err){ console.warn('cost trend error', err); }
-}
-
-// hook router
 (function(){
-  const _render = window.render;
-  window.render = function(){
-    _render();
-    if((location.hash||'')==='#/overview') ov_reload();
+  console.log('products.js loaded');
+
+  const MODAL = {
+    backdrop: null,
+    dialog: null,
+    open(){
+      this.backdrop?.classList.add('show');
+    },
+    close(){
+      this.backdrop?.classList.remove('show');
+    }
   };
-  window.addEventListener('load', ()=>{
-    if((location.hash||'')==='#/overview') ov_reload();
+
+  function initModal(){
+    MODAL.backdrop = document.getElementById('product-modal');
+    if(!MODAL.backdrop) return;
+
+    MODAL.dialog = MODAL.backdrop.querySelector('.modal');
+
+    MODAL.backdrop.addEventListener('click', e=>{
+      if(e.target === MODAL.backdrop) MODAL.close();
+    });
+
+    const closes = MODAL.backdrop.querySelectorAll('[data-modal-close]');
+    closes.forEach(btn=> btn.addEventListener('click', ()=>MODAL.close()));
+  }
+
+  function parseValues(str){
+    return String(str||'')
+      .split(',')
+      .map(s=>s.trim())
+      .filter(s=>s.length>0);
+  }
+
+  function genVariants(opts1, opts2){
+    const rows = [];
+    for(const a of opts1){
+      for(const b of opts2){
+        rows.push({ attr1:a, attr2:b, sku:'', price:'', stock:'' });
+      }
+    }
+    return rows;
+  }
+
+  function renderVariantRows(list){
+    const tbody = document.getElementById('variants-table').querySelector('tbody');
+    if(!tbody) return;
+
+    if(!list || list.length===0){
+      tbody.innerHTML = `<tr><td colspan="5" class="table-empty">ยังไม่มีตัวเลือก</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(v=>`
+      <tr>
+        <td>${v.attr1}</td>
+        <td>${v.attr2}</td>
+        <td><input class="input" data-field="sku" placeholder="SKU"></td>
+        <td><input class="input" data-field="price" placeholder="0"></td>
+        <td><input class="input" data-field="stock" placeholder="0"></td>
+      </tr>
+    `).join('');
+  }
+
+  function collectVariantData(){
+    const tbody = document.getElementById('variants-table').querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    return rows.map(tr=>{
+      const tds = tr.querySelectorAll('td');
+      return {
+        attr1: tds[0].textContent.trim(),
+        attr2: tds[1].textContent.trim(),
+        sku: tds[2].querySelector('input')?.value.trim() || '',
+        price: Number(tds[3].querySelector('input')?.value||0),
+        stock: Number(tds[4].querySelector('input')?.value||0)
+      };
+    });
+  }
+
+  async function saveProduct(){
+    const name = document.getElementById('p-name')?.value.trim()||'';
+    const sku = document.getElementById('p-sku')?.value.trim()||'';
+    const brand = document.getElementById('p-brand')?.value.trim()||'';
+    const category = document.getElementById('p-category')?.value.trim()||'';
+    const note = document.getElementById('p-note')?.value.trim()||'';
+
+    if(!name){ alert('กรุณากรอกชื่อสินค้า'); return; }
+
+    const variants = collectVariantData();
+
+    const body = {
+      action: 'addProduct',
+      name, sku, brand, category, note,
+      variants
+    };
+
+    try{
+      const cfg = JSON.parse(localStorage.getItem('hug_settings_v1')||'{}');
+      if(!cfg.appsScriptUrl || !cfg.apiToken){ alert('ยังไม่ได้ตั้งค่า Apps Script'); return; }
+
+      const res = await fetch(cfg.appsScriptUrl,{
+        method:'POST',
+        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+        body: JSON.stringify({ token: cfg.apiToken, ...body })
+      });
+      const json = await res.json();
+
+      if(json && json.ok){
+        alert('บันทึกสำเร็จ');
+        MODAL.close();
+      }else{
+        alert('บันทึกล้มเหลว');
+      }
+    }catch(err){
+      console.error(err);
+      alert('เกิดข้อผิดพลาดในการส่งข้อมูล');
+    }
+  }
+
+  function initEvents(){
+    const btnAdd = document.getElementById('pd-btn-add-product');
+    if(btnAdd) btnAdd.addEventListener('click', ()=> MODAL.open());
+
+    const btnGen = document.getElementById('btn-generate-variants');
+    if(btnGen){
+      btnGen.addEventListener('click', ()=>{
+        const opt1 = parseValues(document.getElementById('opt1-values')?.value||'');
+        const opt2 = parseValues(document.getElementById('opt2-values')?.value||'');
+        const list = genVariants(opt1, opt2);
+        renderVariantRows(list);
+      });
+    }
+
+    const btnSave = document.getElementById('btn-save-product');
+    if(btnSave) btnSave.addEventListener('click', saveProduct);
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    initModal();
+    initEvents();
   });
 })();

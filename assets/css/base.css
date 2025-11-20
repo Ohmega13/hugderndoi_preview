@@ -121,6 +121,10 @@ body{
   padding:18px 22px 22px;
   position:relative;
 }
+.main-inner{
+  max-width:1120px;
+  margin:0 auto;
+}
 .topbar{
   display:flex;
   align-items:center;
@@ -341,3 +345,229 @@ textarea.input{resize:vertical}
   .main{padding:14px}
   .ribbon{left:10px;right:10px;font-size:10px}
 }
+
+/* Page structure helpers */
+.page-header{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+.page-header-main{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.page-title{
+  font-size:16px;
+  font-weight:600;
+  letter-spacing:.02em;
+  color:var(--title);
+}
+.page-subtitle{
+  font-size:12px;
+  color:var(--muted);
+}
+.page-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+/* List page helpers (products, orders, customers) */
+.page-shell{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.page-shell-filters{
+  display:grid;
+  grid-template-columns: minmax(0,2fr) repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.page-shell-filters .select,
+.page-shell-filters .input{
+  font-size:12px;
+}
+.page-shell-table{
+  margin-top:4px;
+}
+
+/* Section header row (title + small filters) */
+.section-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+.section-title{
+  font-size:13px;
+  font-weight:500;
+  color:var(--title);
+}
+.section-meta{
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* Table styling for lists (products, orders, customers) */
+.table-wrap{
+  margin-top:8px;
+  margin-bottom:10px;
+  border-radius:var(--radius-sm);
+  border:1px solid rgba(148,163,184,.35);
+  overflow:hidden;
+  background:rgba(15,23,42,.96);
+  box-shadow:var(--shadow);
+}
+.table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+}
+.table thead{
+  background:rgba(15,23,42,.9);
+}
+.table th,
+.table td{
+  padding:8px 10px;
+  text-align:left;
+  border-bottom:1px solid rgba(30,64,175,.55);
+}
+.table th{
+  font-weight:500;
+  color:var(--muted);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+.table tbody tr:hover{
+  background:rgba(15,23,42,.98);
+}
+.table tbody tr:last-child td{
+  border-bottom:none;
+}
+.table .cell-right{text-align:right;}
+.table .cell-center{text-align:center;}
+
+/* Chip / tag style for options (สี/ลาย/ไซส์ ฯลฯ) */
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-size:11px;
+  padding:3px 8px;
+  border-radius:999px;
+  border:1px solid rgba(148,163,184,.45);
+  background:rgba(15,23,42,.96);
+  color:var(--muted);
+}
+.chip-dot{
+  width:7px;
+  height:7px;
+  border-radius:999px;
+}
+.chip-dot.blue{background:#38bdf8;}
+.chip-dot.violet{background:#8b5cf6;}
+.chip-dot.green{background:#22c55e;}
+.chip-dot.red{background:#ef4444;}
+.chip-dot.amber{background:#eab308;}
+
+/* Tag list layout */
+.tag-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+/* Modal / popup base (ใช้กับหน้าเพิ่มสินค้าแบบ popup) */
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.72);
+  backdrop-filter:blur(12px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:40;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease-out;
+}
+.modal-backdrop.show{
+  opacity:1;
+  pointer-events:auto;
+}
+.modal{
+  width:100%;
+  max-width:560px;
+  max-height:90vh;
+  border-radius:var(--radius);
+  background:rgba(15,23,42,.98);
+  border:1px solid rgba(148,163,184,.55);
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.modal-header{
+  padding:12px 14px;
+  border-bottom:1px solid rgba(30,64,175,.7);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.modal-title{
+  font-size:14px;
+  font-weight:500;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.modal-body{
+  padding:12px 14px 10px;
+  overflow:auto;
+}
+.modal-footer{
+  padding:10px 14px 12px;
+  border-top:1px solid rgba(30,64,175,.7);
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+/* Small helper stacks (vertical spacing) */
+.stack-sm{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.stack-md{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* Compact pills for status (stock, active/inactive) */
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:3px 8px;
+  border-radius:999px;
+  font-size:11px;
+  border:1px solid rgba(148,163,184,.45);
+}
+.status-pill span.dot{
+  width:7px;
+  height:7px;
+  border-radius:999px;
+}
+.status-pill.ok span.dot{background:#22c55e;}
+.status-pill.warn span.dot{background:#eab308;}
+.status-pill.danger span.dot{background:#ef4444;}
+.status-pill.muted span.dot{background:#6b7280;}

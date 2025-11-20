@@ -5,32 +5,34 @@
   padding: 1.5rem 1.75rem 2.5rem;
 }
 
+/* Page header */
 .page-header {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 1.25rem;
-  margin-bottom: 1.25rem;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .page-title {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 
 .page-subtitle {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
-  margin-top: 0.15rem;
+  margin-top: 0.2rem;
 }
 
 /* 2-column main area */
 .page-main-2col {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.2fr);
-  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
+  gap: 1.5rem;
   align-items: flex-start;
+  margin-top: 0.25rem;
 }
 
 @media (max-width: 960px) {
@@ -41,20 +43,24 @@
 
 /* ===== Cards ===== */
 .card {
-  background: radial-gradient(circle at top left, rgba(255,255,255,0.03), transparent 55%),
-              rgba(8, 12, 24, 0.98);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.05), transparent 55%),
+    rgba(8, 12, 24, 0.96);
   border-radius: 1rem;
-  padding: 1.25rem 1.3rem;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  padding: 1.1rem 1.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.01);
+  backdrop-filter: blur(16px);
 }
 
 .card--flush {
-  padding: 1rem 1.1rem;
+  padding: 0.9rem 1.1rem;
 }
 
 .panel-title {
-  font-size: 0.98rem;
+  font-size: 1rem;
   font-weight: 500;
 }
 
@@ -91,12 +97,12 @@
   font-size: 0.78rem;
   padding: 0.35rem 0.6rem;
   border-radius: 999px;
-  background: rgba(86, 156, 255, 0.12);
+  background: rgba(86, 156, 255, 0.16);
   color: #e4f0ff;
 }
 
 .summary-pill--muted {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--text-muted);
 }
 
@@ -104,21 +110,21 @@
 .form-card-header {
   display: flex;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.9rem;
   align-items: flex-start;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.9rem;
 }
 
 .form-section {
-  margin-top: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 1.1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .form-section-title {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 500;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.45rem;
 }
 
 .form-help {
@@ -127,14 +133,21 @@
   margin-bottom: 0.5rem;
 }
 
+/* grid สำหรับฟอร์ม: desktop จัด 3 คอลัมน์ จะได้ไม่ยาวลงล่างเกินไป */
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem 0.9rem;
 }
 
 .form-grid .field--full {
   grid-column: 1 / -1;
+}
+
+@media (max-width: 1120px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 960px) {
@@ -146,16 +159,17 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
 }
 
 .field-label {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--text-muted);
 }
 
 .field-hint {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   margin-top: 0.1rem;
 }
@@ -165,16 +179,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.45rem;
 }
 
 .table-wrapper {
-  margin-top: 0.35rem;
-  border-radius: 0.8rem;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 0.4rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
   overflow: hidden;
-  background: radial-gradient(circle at top left, rgba(255,255,255,0.02), transparent 50%),
-              rgba(5, 9, 21, 0.96);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.03), transparent 50%),
+    rgba(5, 9, 21, 0.96);
 }
 
 .table {
@@ -184,7 +199,11 @@
 }
 
 .table thead {
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.04),
+    rgba(255, 255, 255, 0.02)
+  );
 }
 
 .table th,
@@ -197,10 +216,15 @@
 .table th {
   font-weight: 500;
   color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.01);
 }
 
 .table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(86, 156, 255, 0.12);
 }
 
 .table-sm th,
@@ -209,14 +233,14 @@
 }
 
 .table-empty {
-  padding: 0.85rem 0.9rem;
+  padding: 0.9rem 0.95rem;
   font-size: 0.78rem;
   color: var(--text-muted);
 }
 
 /* Variant table extra spacing */
 .variant-toolbar {
-  margin: 0.5rem 0 0.35rem;
+  margin: 0.6rem 0 0.4rem;
   display: flex;
   justify-content: flex-end;
 }
@@ -231,6 +255,163 @@
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1.2rem;
+  gap: 0.6rem;
+  margin-top: 1.3rem;
+}
+
+/* ===== Products page layout helpers ===== */
+
+/* Wrapper for products page main area (list + optional side panel) */
+.pd-page-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+/* Toolbar above the products table (title + actions + quick filters) */
+.pd-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.pd-toolbar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.pd-toolbar-title {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.pd-toolbar-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.pd-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* ทำให้ตารางดูเป็น list อ่านง่ายขึ้น และไม่ยาวลงด้านล่างเกินไป */
+.pd-table-wrapper {
+  margin-top: 0.4rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  overflow: auto;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.03), transparent 50%),
+    rgba(5, 9, 21, 0.96);
+  max-height: 460px;
+}
+
+/* ปรับขนาดฟอนต์ให้แน่นขึ้นเล็กน้อยสำหรับ list สินค้า */
+.table--products {
+  font-size: 0.78rem;
+}
+
+.table--products th,
+.table--products td {
+  padding: 0.45rem 0.6rem;
+}
+
+/* ===== Popup (modal) สำหรับเพิ่ม / แก้ไขสินค้า ===== */
+
+/* ฉากหลัง popup */
+.pd-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+}
+
+/* ใช้ class นี้เวลาเปิด popup */
+.pd-modal-backdrop.is-open {
+  display: flex;
+}
+
+/* กล่อง popup หลัก */
+.pd-modal {
+  width: 100%;
+  max-width: 720px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.06), transparent 55%),
+    rgba(8, 12, 24, 0.98);
+  border-radius: 1rem;
+  padding: 1rem 1.3rem 1.3rem;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.78),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* header ของ popup */
+.pd-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.pd-modal-title {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.pd-modal-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ปุ่มปิด popup */
+.pd-modal-close {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.15rem;
+  line-height: 1;
+}
+
+.pd-modal-close:hover {
+  color: #ffffff;
+}
+
+/* body ของ popup รองรับฟอร์มหลายคอลัมน์ได้เลย */
+.pd-modal-body {
+  margin-top: 0.2rem;
+}
+
+/* footer ปุ่มบันทึก/ยกเลิก */
+.pd-modal-footer {
+  margin-top: 1.1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+/* เวอร์ชันย่อของ form-grid เวลาอยู่ใน popup เพื่อไม่ให้แน่นเกินไป */
+.pd-modal .form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 768px) {
+  .pd-modal {
+    max-width: 100%;
+    margin: 0 1rem;
+  }
+
+  .pd-modal .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
