@@ -244,9 +244,7 @@
                   <th style="width: 80px;">จัดการ</th>
                 </tr>
               </thead>
-              <tbody id="pd-tbody">
-                <!-- products.js จะเติมข้อมูลให้ -->
-              </tbody>
+              <tbody id="pd-tbody"></tbody>
             </table>
           </div>
           <div class="table-footer">
@@ -261,13 +259,11 @@
           <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="pd-modal-title">
             <header class="modal-header">
               <h3 id="pd-modal-title">เพิ่มสินค้า</h3>
-              <button class="icon-btn" id="pd-modal-close" aria-label="ปิด">
-                ✕
-              </button>
+              <button class="icon-btn" id="pd-modal-close" aria-label="ปิด">✕</button>
             </header>
 
             <div class="modal-body">
-              <!-- Block 1: ข้อมูลสินค้า -->
+              <!-- Block 1: Product info -->
               <section class="modal-section">
                 <header class="modal-section-header">
                   <div class="modal-section-title">ข้อมูลสินค้า</div>
@@ -299,7 +295,7 @@
                 </div>
               </section>
 
-              <!-- Block 2: ตัวเลือกสินค้า -->
+              <!-- Block 2: Variant config -->
               <section class="modal-section">
                 <header class="modal-section-header">
                   <div class="modal-section-title">ตัวเลือกสินค้า</div>
@@ -307,7 +303,7 @@
                 </header>
                 <div class="modal-section-body">
                   <p class="muted small">
-                    ระบบรองรับ 2 ชั้นของตัวเลือก เช่น ชั้นที่ 1 = สี หรือ ลายเสื้อ, ชั้นที่ 2 = ไซซ์
+                    ระบบรองรับ 2 ชั้น เช่น ชั้น 1 = สี, ชั้น 2 = ไซซ์
                   </p>
 
                   <div class="variant-config">
@@ -332,19 +328,17 @@
                       </label>
                     </div>
                     <div class="variant-actions">
-                      <button id="pd-generate-variants" class="btn ghost">
-                        สร้างตัวแปรสินค้า
-                      </button>
+                      <button id="pd-generate-variants" class="btn ghost">สร้างตัวแปรสินค้า</button>
                     </div>
                   </div>
                 </div>
               </section>
 
-              <!-- Block 3: ตารางตัวแปรสินค้า -->
+              <!-- Block 3: Variant table -->
               <section class="modal-section">
                 <header class="modal-section-header">
                   <div class="modal-section-title">ตัวแปรสินค้า</div>
-                  <div class="modal-section-sub">ตั้งราคา, สต็อก และบาร์โค้ดของแต่ละตัวเลือก</div>
+                  <div class="modal-section-sub">ตั้งราคา, สต็อก และบาร์โค้ด</div>
                 </header>
                 <div class="modal-section-body">
                   <div class="muted small" style="margin-bottom: 0.5rem;">
@@ -364,9 +358,7 @@
                             <th>บาร์โค้ด</th>
                           </tr>
                         </thead>
-                        <tbody id="pd-variant-tbody">
-                          <!-- products.js จะสร้างแถวตามตัวเลือก -->
-                        </tbody>
+                        <tbody id="pd-variant-tbody"></tbody>
                       </table>
                     </div>
                   </div>
