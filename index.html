@@ -190,28 +190,40 @@
 
       <!-- === Orders / Products / Customers / Expenses / Summary / Settings === -->
 
-      <!-- === Products: All Products === -->
+      <!-- === Products: All Products (List + Popup) === -->
       <section id="view-products-all" class="view hidden">
+        <!-- Page header -->
         <div class="page-header">
-          <h2>สินค้าทั้งหมด</h2>
+          <div>
+            <h2>สินค้าทั้งหมด</h2>
+            <p class="muted small">จัดการรายการสินค้า, ตัวเลือก และสต็อกทั้งหมดในระบบ</p>
+          </div>
           <div class="page-actions">
-            <button id="pd-btn-add-product" class="btn primary">+ เพิ่มสินค้า</button>
+            <button id="pd-btn-add-product" class="btn primary">
+              + เพิ่มสินค้า
+            </button>
           </div>
         </div>
 
-        <!-- Filters -->
+        <!-- Filters toolbar -->
         <div class="toolbar">
           <div class="toolbar-left">
             <label class="field">
               <span>ค้นหาสินค้า</span>
-              <input id="pd-search" class="input" placeholder="พิมพ์ชื่อสินค้า, SKU หรือบาร์โค้ด" />
+              <input
+                id="pd-search"
+                class="input"
+                placeholder="พิมพ์ชื่อสินค้า, SKU หรือบาร์โค้ด"
+              />
             </label>
+
             <label class="field">
               <span>หมวดหมู่</span>
               <select id="pd-filter-category" class="input">
                 <option value="">ทั้งหมด</option>
               </select>
             </label>
+
             <label class="field">
               <span>สถานะ</span>
               <select id="pd-filter-status" class="input">
@@ -222,12 +234,13 @@
               </select>
             </label>
           </div>
+
           <div class="toolbar-right">
             <button id="pd-btn-reload" class="btn ghost">รีโหลด</button>
           </div>
         </div>
 
-        <!-- Table -->
+        <!-- Products table -->
         <div class="card">
           <div class="table-wrapper">
             <table class="table" id="pd-table">
@@ -247,6 +260,7 @@
               <tbody id="pd-tbody"></tbody>
             </table>
           </div>
+
           <div class="table-footer">
             <div id="pd-summary" class="muted">
               รวม 0 รายการ • สต็อกคงเหลือ 0 ชิ้น
@@ -254,42 +268,72 @@
           </div>
         </div>
 
-        <!-- Popup: Add / Edit Product -->
-        <div id="pd-modal" class="modal-overlay hidden" aria-hidden="true">
-          <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="pd-modal-title">
+        <!-- Modal: Add / Edit Product -->
+        <div
+          id="pd-modal"
+          class="modal-overlay hidden"
+          aria-hidden="true"
+        >
+          <div
+            class="modal-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pd-modal-title"
+          >
             <header class="modal-header">
               <h3 id="pd-modal-title">เพิ่มสินค้า</h3>
-              <button class="icon-btn" id="pd-modal-close" aria-label="ปิด">✕</button>
+              <button
+                class="icon-btn"
+                id="pd-modal-close"
+                aria-label="ปิด"
+              >
+                ✕
+              </button>
             </header>
 
             <div class="modal-body">
               <!-- Block 1: Product info -->
               <section class="modal-section">
                 <header class="modal-section-header">
-                  <div class="modal-section-title">ข้อมูลสินค้า</div>
-                  <div class="modal-section-sub">ตั้งชื่อสินค้า, SKU, หมวดหมู่ และหมายเหตุ</div>
+                  <div class="modal-section-title">ข้อมูลหลักสินค้า</div>
+                  <div class="modal-section-sub">
+                    ตั้งชื่อสินค้า, SKU, หมวดหมู่ และหมายเหตุ
+                  </div>
                 </header>
+
                 <div class="modal-section-body">
                   <div class="form-grid">
                     <label class="full">
                       ชื่อสินค้า
                       <input id="pd-name" class="input" />
                     </label>
+
                     <label>
                       SKU หลัก
                       <input id="pd-sku" class="input" />
                     </label>
+
                     <label>
                       บาร์โค้ด
                       <input id="pd-barcode" class="input" />
                     </label>
+
                     <label>
                       หมวดหมู่
-                      <input id="pd-category" class="input" placeholder="เช่น เสื้อยืด, แก้วน้ำ" />
+                      <input
+                        id="pd-category"
+                        class="input"
+                        placeholder="เช่น เสื้อยืด, แก้วน้ำ"
+                      />
                     </label>
+
                     <label class="full">
                       หมายเหตุ
-                      <textarea id="pd-note" class="input" rows="2"></textarea>
+                      <textarea
+                        id="pd-note"
+                        class="input"
+                        rows="2"
+                      ></textarea>
                     </label>
                   </div>
                 </div>
@@ -299,36 +343,65 @@
               <section class="modal-section">
                 <header class="modal-section-header">
                   <div class="modal-section-title">ตัวเลือกสินค้า</div>
-                  <div class="modal-section-sub">กำหนดสี / ลาย และไซซ์ เพื่อสร้างตัวแปรสินค้าอัตโนมัติ</div>
+                  <div class="modal-section-sub">
+                    กำหนดสี / ลาย และไซซ์ เพื่อสร้างตัวแปรสินค้าอัตโนมัติ
+                  </div>
                 </header>
+
                 <div class="modal-section-body">
                   <p class="muted small">
-                    ระบบรองรับ 2 ชั้น เช่น ชั้น 1 = สี, ชั้น 2 = ไซซ์
+                    ระบบรองรับ 2 ชั้นของตัวเลือก เช่น ชั้นที่ 1 = สี หรือ
+                    ลายเสื้อ, ชั้นที่ 2 = ไซซ์
                   </p>
 
                   <div class="variant-config">
                     <div class="variant-row">
                       <label>
                         ชื่อคุณลักษณะชั้นที่ 1
-                        <input id="pd-attr1-name" class="input" value="สี" />
+                        <input
+                          id="pd-attr1-name"
+                          class="input"
+                          value="สี"
+                        />
                       </label>
+
                       <label>
                         ค่า (คั่นด้วย ,)
-                        <input id="pd-attr1-values" class="input" placeholder="เช่น แดง, น้ำเงิน, เขียว" />
+                        <input
+                          id="pd-attr1-values"
+                          class="input"
+                          placeholder="เช่น แดง, น้ำเงิน, เขียว"
+                        />
                       </label>
                     </div>
+
                     <div class="variant-row">
                       <label>
                         ชื่อคุณลักษณะชั้นที่ 2
-                        <input id="pd-attr2-name" class="input" value="ไซซ์" />
+                        <input
+                          id="pd-attr2-name"
+                          class="input"
+                          value="ไซซ์"
+                        />
                       </label>
+
                       <label>
                         ค่า (คั่นด้วย ,)
-                        <input id="pd-attr2-values" class="input" placeholder="เช่น S, M, L, XL" />
+                        <input
+                          id="pd-attr2-values"
+                          class="input"
+                          placeholder="เช่น S, M, L, XL"
+                        />
                       </label>
                     </div>
+
                     <div class="variant-actions">
-                      <button id="pd-generate-variants" class="btn ghost">สร้างตัวแปรสินค้า</button>
+                      <button
+                        id="pd-generate-variants"
+                        class="btn ghost"
+                      >
+                        สร้างตัวแปรสินค้า
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -338,16 +411,26 @@
               <section class="modal-section">
                 <header class="modal-section-header">
                   <div class="modal-section-title">ตัวแปรสินค้า</div>
-                  <div class="modal-section-sub">ตั้งราคา, สต็อก และบาร์โค้ด</div>
+                  <div class="modal-section-sub">
+                    ตั้งราคา, สต็อก และบาร์โค้ดของแต่ละตัวเลือก
+                  </div>
                 </header>
+
                 <div class="modal-section-body">
-                  <div class="muted small" style="margin-bottom: 0.5rem;">
-                    ตัวแปรทั้งหมด: <span id="pd-variant-count">0</span> แบบ
+                  <div
+                    class="muted small"
+                    style="margin-bottom: 0.5rem;"
+                  >
+                    ตัวแปรทั้งหมด:
+                    <span id="pd-variant-count">0</span> แบบ
                   </div>
 
                   <div class="card variant-table-wrapper">
                     <div class="table-wrapper">
-                      <table class="table small" id="pd-variant-table">
+                      <table
+                        class="table small"
+                        id="pd-variant-table"
+                      >
                         <thead>
                           <tr>
                             <th>ตัวเลือก 1</th>
@@ -367,8 +450,18 @@
             </div>
 
             <footer class="modal-footer">
-              <button class="btn ghost" id="pd-modal-cancel">ยกเลิก</button>
-              <button class="btn primary" id="pd-modal-save">บันทึกสินค้า</button>
+              <button
+                class="btn ghost"
+                id="pd-modal-cancel"
+              >
+                ยกเลิก
+              </button>
+              <button
+                class="btn primary"
+                id="pd-modal-save"
+              >
+                บันทึกสินค้า
+              </button>
             </footer>
           </div>
         </div>
