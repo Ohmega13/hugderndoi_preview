@@ -817,7 +817,7 @@
       <section id="view-products-in" class="view hidden">
         <div class="card">
           <div class="panel-title">รับเข้าสต็อก</div>
-          <form class="form grid-2">
+          <form id="stockInForm" class="form grid-2">
             <div>
               <label>เลือกสินค้า/ตัวแปร</label>
               <!-- เปลี่ยนจาก input + datalist เป็น dropdown select จริง ๆ -->
@@ -827,19 +827,44 @@
               <div id="stock_in_info" class="muted" style="margin-top:4px; font-size:12px;">คงเหลือปัจจุบัน: —</div>
             </div>
             <div>
-              <label>จำนวนรับเข้า</label>
-              <input type="number" class="input" placeholder="เช่น 100">
+              <label>จำนวนรับเข้า (รวม)</label>
+              <input id="stock_in_qty" type="number" class="input" placeholder="เช่น 100">
             </div>
             <div>
-              <label>ต้นทุนต่อหน่วย (ถ้ามี)</label>
-              <input type="number" class="input" placeholder="เช่น 120">
+              <label>ต้นทุนต่อหน่วย (รวม)</label>
+              <input id="stock_in_cost" type="number" class="input" placeholder="เช่น 120">
             </div>
             <div>
               <label>หมายเหตุ</label>
-              <input class="input" placeholder="ล็อต / อินวอยซ์ ฯลฯ">
+              <input id="stock_in_note" class="input" placeholder="ล็อต / อินวอยซ์ ฯลฯ">
             </div>
-            <div><button class="btn success">บันทึกรับเข้า</button></div>
+            <div style="align-self:end;">
+              <button id="btnStockInSubmit" class="btn success">บันทึกรับเข้า</button>
+            </div>
           </form>
+          <!-- ตารางรับเข้าตัวแปรย่อย -->
+          <div id="stock-in-variants-panel" class="card" style="margin-top:16px; display:none;">
+            <div class="panel-title">รับเข้าตัวแปรย่อยของสินค้า</div>
+            <p id="stock-in-variants-caption" class="muted" style="margin-top:4px; font-size:12px;">
+              เลือกสินค้าด้านบน แล้วระบุจำนวนรับเข้าและต้นทุนต่อหน่วยสำหรับแต่ละตัวแปร
+            </p>
+            <div style="max-height:260px; overflow:auto; border-radius:12px; border:1px solid rgba(255,255,255,.06); margin-top:10px;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>SKU ตัวแปร</th>
+                    <th>ตัวเลือก</th>
+                    <th style="text-align:right">คงเหลือปัจจุบัน</th>
+                    <th style="text-align:right">จำนวนรับเข้า</th>
+                    <th style="text-align:right">ต้นทุนต่อหน่วย</th>
+                  </tr>
+                </thead>
+                <tbody id="stock-in-variants-body">
+                  <tr><td colspan="5" class="muted">เลือกสินค้าด้านบนก่อน</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
       <section id="view-products-adjust" class="view hidden">
@@ -880,6 +905,15 @@
       <section id="view-customers-list" class="view hidden">
         <div class="card">
           <div class="panel-title">รายชื่อลูกค้า</div>
+          <div id="custProgressContainer" class="muted" style="margin:8px 0 4px; display:none;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+              <span>กำลังโหลดข้อมูลลูกค้า...</span>
+              <span id="custProgressLabel">0%</span>
+            </div>
+            <div style="position:relative; width:100%; height:6px; border-radius:999px; background:rgba(148,163,184,.25); overflow:hidden;">
+              <div id="custProgressBar" style="width:0%; height:100%; border-radius:999px; background:linear-gradient(90deg,#38bdf8,#6366f1); transition:width .25s ease;"></div>
+            </div>
+          </div>
           <div class="toolbar">
             <input id="custSearch" class="input" placeholder="ค้นหาชื่อ / Email / เบอร์" style="min-width:280px">
             <button id="btnOpenAddCustomer" class="btn primary">+ เพิ่มลูกค้า</button>
@@ -961,9 +995,85 @@
             </div>
           </div>
 
+          <!-- Edit Customer Modal -->
+          <div id="editCustomerModal" class="modal-backdrop" aria-hidden="true">
+            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editCustomerTitle">
+              <header>
+                <h4 id="editCustomerTitle">แก้ไขลูกค้า</h4>
+                <button class="close" id="btnCloseEditCustomer" title="ปิด">×</button>
+              </header>
+              <form id="editCustomerForm" class="form">
+                <div class="grid-3">
+                  <div>
+                    <label>รหัสลูกค้า</label>
+                    <input id="ec_customer_id" class="input" readonly>
+                  </div>
+                  <div>
+                    <label>ชื่อลูกค้า</label>
+                    <input id="ec_name" class="input" required>
+                  </div>
+                  <div>
+                    <label>Email</label>
+                    <input id="ec_email" class="input" type="email">
+                  </div>
+                </div>
+
+                <div class="grid-3">
+                  <div>
+                    <label>เบอร์โทร</label>
+                    <input id="ec_phone" class="input">
+                  </div>
+                  <div>
+                    <label>ประเทศ</label>
+                    <input id="ec_country" class="input">
+                  </div>
+                  <div>
+                    <label>รหัสไปรษณีย์</label>
+                    <input id="ec_postcode" class="input" inputmode="numeric" pattern="[0-9]{5}" maxlength="5">
+                  </div>
+                </div>
+
+                <div class="grid-4">
+                  <div>
+                    <label>บ้านเลขที่ / อาคาร-ชั้น / ห้อง</label>
+                    <input id="ec_addr1" class="input">
+                  </div>
+                  <div>
+                    <label>หมู่บ้าน/คอนโด / ซอย / ถนน</label>
+                    <input id="ec_addr2" class="input">
+                  </div>
+                  <div>
+                    <label>ตำบล/แขวง</label>
+                    <input id="ec_subdistrict" class="input">
+                  </div>
+                  <div>
+                    <label>อำเภอ/เขต</label>
+                    <input id="ec_district" class="input">
+                  </div>
+                </div>
+
+                <div class="grid-3">
+                  <div>
+                    <label>จังหวัด</label>
+                    <select id="ec_province" class="select"></select>
+                  </div>
+                  <div style="grid-column: span 2">
+                    <label>หมายเหตุลูกค้า (ถ้ามี)</label>
+                    <input id="ec_note" class="input">
+                  </div>
+                </div>
+
+                <footer>
+                  <button type="button" class="btn" id="btnCancelEditCustomer">ยกเลิก</button>
+                  <button type="submit" class="btn success">บันทึกการแก้ไข</button>
+                </footer>
+              </form>
+            </div>
+          </div>
+
           <table class="table">
             <thead>
-              <tr><th>ชื่อลูกค้า</th><th>Email</th><th>โทร</th><th>ออเดอร์สะสม</th><th>มูลค่ารวม</th><th></th></tr>
+              <tr><th>ชื่อลูกค้า</th><th>Email</th><th>โทร</th><th>ออเดอร์สะสม</th><th>มูลค่ารวม</th><th style="text-align:right">จัดการ</th></tr>
             </thead>
             <tbody id="customersListBody">
               <tr><td colspan="6">กำลังโหลดข้อมูล...</td></tr>
@@ -1233,7 +1343,513 @@
       </div>
     </div>
   </div>
+
   <div class="ribbon">เมื่อเทียบกับเดือนก่อนหน้า: ยอดขาย 0.0% • ออเดอร์ 0 ใบ • ต้นทุน 0.0%</div>
+
+  <script>
+    // สินค้า: ปุ่ม "ลบที่เลือก" แบบใช้ logic เดียวกับปุ่มลบทีละรายการ
+    (function () {
+      const tbody     = document.getElementById('productsAllBody');
+      const selectAll = document.getElementById('products_select_all');
+      const bulkBtn   = document.getElementById('btnBulkDeleteProducts');
+
+      if (!tbody || !bulkBtn) return;
+
+      function updateBulkBtnVisibility() {
+        const anyChecked = !!tbody.querySelector('td input[type="checkbox"]:checked');
+        bulkBtn.style.display = anyChecked ? 'inline-flex' : 'none';
+      }
+
+      // เลือกทั้งหมด
+      if (selectAll) {
+        selectAll.addEventListener('change', function () {
+          const checkboxes = tbody.querySelectorAll('td input[type="checkbox"]');
+          checkboxes.forEach(cb => {
+            cb.checked = selectAll.checked;
+          });
+          updateBulkBtnVisibility();
+        });
+      }
+
+      // checkbox รายแถว
+      tbody.addEventListener('change', function (e) {
+        if (e.target && e.target.matches('input[type="checkbox"]')) {
+          updateBulkBtnVisibility();
+        }
+      });
+
+      // ให้ปุ่ม "ลบที่เลือก" ใช้ handler ใหม่นี้ (ทับของเดิมถ้ามี)
+      bulkBtn.onclick = async function () {
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const selectedRows = rows.filter(row => {
+          const cb = row.querySelector('td input[type="checkbox"]');
+          return cb && cb.checked;
+        });
+
+        if (!selectedRows.length) {
+          alert('กรุณาเลือกรายการสินค้าที่ต้องการลบก่อน');
+          return;
+        }
+
+        if (!confirm('ต้องการลบสินค้าที่เลือกจำนวน ' + selectedRows.length + ' รายการหรือไม่?')) {
+          return;
+        }
+
+        // เรียกใช้ปุ่มลบของแต่ละแถว (ซึ่งเชื่อมกับ Apps Script อยู่แล้ว)
+        for (const row of selectedRows) {
+          const delBtn = row.querySelector('button.btn.danger');
+          if (delBtn) {
+            delBtn.click();
+            // หน่วงเล็กน้อยกันระบบยิง request พร้อมกันเยอะเกินไป
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+        }
+
+        // หลังลบ ขออัปเดตปุ่มอีกที
+        setTimeout(updateBulkBtnVisibility, 500);
+      };
+
+      // เผยให้สคริปต์อื่นเรียกได้ ถ้าต้องการ
+      window.hdUpdateProductsBulkDeleteVisibility = updateBulkBtnVisibility;
+
+      // เซ็ตสถานะเริ่มต้น
+      updateBulkBtnVisibility();
+    })();
+  </script>
+
+  <script>
+    // ค่าเริ่มต้นสำหรับการเชื่อมต่อ Backend (ใช้ตอนเปิดหน้าเว็บครั้งแรก)
+    window.HUG_DEFAULT_SETTINGS = {
+      appsScriptUrl: 'https://script.google.com/macros/s/AKfycbz-BrzAu0TsD2M0fFxB0xLLyxAtz-1eqnX8GlOP_3bQDDDGXA1GCbsAQa7z6k-lIQNW_w/exec',
+      apiToken: 'CHANGE_ME_DEV',
+      spreadsheetId: '1JuSF8vOerOqS8CImk_dH6e_dmzB8Gz_wtwf0NfUFUhc',
+      sheetMap: '{"Products":"Products","ProductVariants":"ProductVariants","Orders":"Orders","Order_Items":"Order_Items","Stock_Movements":"Stock_Movements","Customers":"Customers","Expenses":"Expenses","Settings":"Settings"}'
+    };
+
+    // เปิดค่าเริ่มต้นให้ Script อื่นใช้เป็น Global (เช่น ส่วนรับสินค้าเข้า)
+    window.HUG_GAS_BASE_URL = window.HUG_DEFAULT_SETTINGS.appsScriptUrl;
+    window.HUG_GAS_TOKEN    = window.HUG_DEFAULT_SETTINGS.apiToken;
+
+    // ตอนโหลดหน้า ให้กรอกค่าเริ่มต้นลงในหน้า Settings อัตโนมัติ ถ้าในฟิลด์ยังว่างอยู่
+    window.addEventListener('load', function () {
+      var sId   = document.getElementById('spreadsheetId');
+      var url   = document.getElementById('appsScriptUrl');
+      var token = document.getElementById('apiToken');
+      var map   = document.getElementById('sheetMap');
+
+      if (sId && !sId.value)    sId.value    = window.HUG_DEFAULT_SETTINGS.spreadsheetId;
+      if (url && !url.value)    url.value    = window.HUG_DEFAULT_SETTINGS.appsScriptUrl;
+      if (token && !token.value) token.value = window.HUG_DEFAULT_SETTINGS.apiToken;
+      if (map && !map.value)    map.value    = window.HUG_DEFAULT_SETTINGS.sheetMap;
+    });
+  </script>
+
+
+  <script>
+    // ลูกค้า: โหลดข้อมูลพร้อมแถบโปรเกรส และรีโหลดทุกครั้งเมื่อเข้าหน้านี้
+    (function(){
+      const tbody = document.getElementById('customersListBody');
+      const progressWrap = document.getElementById('custProgressContainer');
+      const progressBar = document.getElementById('custProgressBar');
+      const progressLabel = document.getElementById('custProgressLabel');
+      let customersCache = [];
+      let currentEditIndex = null;
+      window.hdCustomersCache = customersCache;
+
+      function getBackendEndpoint() {
+        const base = (window.HUG_GAS_BASE_URL) || (window.HUG_DEFAULT_SETTINGS && window.HUG_DEFAULT_SETTINGS.appsScriptUrl) || '';
+        const token = (window.HUG_GAS_TOKEN) || (window.HUG_DEFAULT_SETTINGS && window.HUG_DEFAULT_SETTINGS.apiToken) || '';
+        return { base, token };
+      }
+
+      function setProgress(p){
+        if (!progressBar || !progressLabel) return;
+        if (p < 0) p = 0;
+        if (p > 100) p = 100;
+        progressBar.style.width = p + '%';
+        progressLabel.textContent = p + '%';
+      }
+
+      function showProgress(){
+        if (!progressWrap) return;
+        progressWrap.style.display = 'block';
+        setProgress(5);
+      }
+
+      function hideProgress(){
+        if (!progressWrap) return;
+        setProgress(100);
+        setTimeout(function(){
+          progressWrap.style.display = 'none';
+          setProgress(0);
+        }, 400);
+      }
+
+      async function hdLoadCustomers(){
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="6">กำลังโหลดข้อมูล...</td></tr>';
+        showProgress();
+
+        // fake progress วิ่งไปเรื่อย ๆ จนกว่าจะโหลดเสร็จ
+        let fakeProgress = 5;
+        const timer = setInterval(function(){
+          fakeProgress += 7;
+          if (fakeProgress > 85) fakeProgress = 85;
+          setProgress(fakeProgress);
+        }, 250);
+
+        try {
+          const cfg = getBackendEndpoint();
+          const base = cfg.base;
+          const token = cfg.token;
+
+          if (!base) {
+            tbody.innerHTML = '<tr><td colspan="6">ยังไม่ได้ตั้งค่า Apps Script URL</td></tr>';
+            return;
+          }
+
+          const sep = base.includes('?') ? '&' : '?';
+          const url = base + sep + 'table=Customers&token=' + encodeURIComponent(token);
+
+          const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+          if (!res.ok) {
+            tbody.innerHTML = '<tr><td colspan="6">โหลดข้อมูลไม่สำเร็จ (' + res.status + ')</td></tr>';
+            return;
+          }
+
+          const data = await res.json().catch(function(){ return null; });
+          const rows = data && Array.isArray(data.rows) ? data.rows : [];
+          customersCache = rows;
+          window.hdCustomersCache = customersCache;
+
+          if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="6">ยังไม่มีข้อมูลลูกค้า</td></tr>';
+            return;
+          }
+
+          setProgress(95);
+
+          const fmtMoney = function(v){
+            const n = Number(v || 0);
+            return '฿' + n.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          };
+
+          tbody.innerHTML = '';
+          rows.forEach(function(r, idx){
+            const tr = document.createElement('tr');
+            tr.dataset.index = idx;
+            tr.innerHTML =
+              '<td>' + (r.name || '-') + '</td>' +
+              '<td>' + (r.email || '-') + '</td>' +
+              '<td>' + (r.phone || '-') + '</td>' +
+              '<td style="text-align:right">' + (r.total_orders || 0) + '</td>' +
+              '<td style="text-align:right">' + fmtMoney(r.total_amount) + '</td>' +
+              '<td>' +
+                '<div style="display:flex; gap:6px; justify-content:flex-end;">' +
+                  '<button type="button" class="btn" data-edit-index="' + idx + '">แก้ไข</button>' +
+                  '<button type="button" class="btn danger" data-delete-index="' + idx + '">ลบ</button>' +
+                '</div>' +
+              '</td>';
+            tbody.appendChild(tr);
+          });
+
+          setProgress(100);
+        } catch (err) {
+          console.error('โหลดข้อมูลลูกค้าผิดพลาด:', err);
+          tbody.innerHTML = '<tr><td colspan="6">เกิดข้อผิดพลาดระหว่างโหลดข้อมูลลูกค้า</td></tr>';
+        } finally {
+          clearInterval(timer);
+          hideProgress();
+        }
+      }
+
+      // --- Edit Customer Modal Logic ---
+      const editModal = document.getElementById('editCustomerModal');
+      const editForm = document.getElementById('editCustomerForm');
+      const btnCloseEdit = document.getElementById('btnCloseEditCustomer');
+      const btnCancelEdit = document.getElementById('btnCancelEditCustomer');
+
+      function openEditCustomerModal(index) {
+        if (!editModal || !editForm) return;
+        const c = customersCache[index];
+        if (!c) return;
+        currentEditIndex = index;
+
+        // เติมค่าลงฟอร์ม (ถ้าไม่มี field นั้นใน row ให้เป็นค่าว่าง)
+        document.getElementById('ec_customer_id').value = c.customer_id || c.id || '';
+        document.getElementById('ec_name').value        = c.name || '';
+        document.getElementById('ec_email').value       = c.email || '';
+        document.getElementById('ec_phone').value       = c.phone || '';
+        document.getElementById('ec_country').value     = c.country || '';
+        document.getElementById('ec_postcode').value    = c.postcode || c.zip || '';
+        document.getElementById('ec_addr1').value       = c.addr1 || '';
+        document.getElementById('ec_addr2').value       = c.addr2 || '';
+        document.getElementById('ec_subdistrict').value = c.subdistrict || '';
+        document.getElementById('ec_district').value    = c.district || '';
+        document.getElementById('ec_note').value        = c.note || '';
+
+        // จังหวัด – ถ้ามีค่าให้เซ็ต, ถ้าไม่มีก็ปล่อยว่าง
+        const provSelect = document.getElementById('ec_province');
+        if (provSelect) {
+          const v = c.province || '';
+          provSelect.value = v;
+        }
+
+        editModal.classList.add('show-modal');
+        editModal.style.display = 'flex';
+      }
+
+      function closeEditCustomerModal() {
+        if (!editModal) return;
+        currentEditIndex = null;
+        editModal.classList.remove('show-modal');
+        editModal.style.display = 'none';
+      }
+
+      if (btnCloseEdit) {
+        btnCloseEdit.addEventListener('click', closeEditCustomerModal);
+      }
+      if (btnCancelEdit) {
+        btnCancelEdit.addEventListener('click', closeEditCustomerModal);
+      }
+
+      if (editForm) {
+        editForm.addEventListener('submit', async function(e){
+          e.preventDefault();
+          if (currentEditIndex === null) {
+            closeEditCustomerModal();
+            return;
+          }
+          const c = customersCache[currentEditIndex];
+          if (!c) {
+            closeEditCustomerModal();
+            return;
+          }
+
+          const cfg = getBackendEndpoint();
+          if (!cfg.base) {
+            console.warn('ยังไม่ได้ตั้งค่า Apps Script URL');
+            closeEditCustomerModal();
+            return;
+          }
+
+          const payload = {
+            customer_id: document.getElementById('ec_customer_id').value || c.customer_id || c.id || '',
+            name:        document.getElementById('ec_name').value || '',
+            email:       document.getElementById('ec_email').value || '',
+            phone:       document.getElementById('ec_phone').value || '',
+            country:     document.getElementById('ec_country').value || '',
+            postcode:    document.getElementById('ec_postcode').value || '',
+            addr1:       document.getElementById('ec_addr1').value || '',
+            addr2:       document.getElementById('ec_addr2').value || '',
+            subdistrict: document.getElementById('ec_subdistrict').value || '',
+            district:    document.getElementById('ec_district').value || '',
+            province:    document.getElementById('ec_province').value || '',
+            note:        document.getElementById('ec_note').value || ''
+          };
+
+          try {
+            const sep = cfg.base.includes('?') ? '&' : '?';
+            const url = cfg.base + sep + 'action=updateCustomer&token=' + encodeURIComponent(cfg.token || '');
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+              console.warn('อัปเดตลูกค้าไม่สำเร็จ', res.status, res.statusText);
+            }
+          } catch (err) {
+            console.error('updateCustomer error:', err);
+          } finally {
+            closeEditCustomerModal();
+            // โหลดข้อมูลใหม่หลังบันทึก
+            hdLoadCustomers();
+          }
+        });
+      }
+
+      if (tbody) {
+        tbody.addEventListener('click', async function(e){
+          const editBtn = e.target.closest('button[data-edit-index]');
+          if (editBtn) {
+            const idx = Number(editBtn.getAttribute('data-edit-index'));
+            if (!Number.isNaN(idx)) {
+              openEditCustomerModal(idx);
+            }
+            return;
+          }
+
+          const delBtn = e.target.closest('button[data-delete-index]');
+          if (delBtn) {
+            const idx = Number(delBtn.getAttribute('data-delete-index'));
+            if (Number.isNaN(idx)) return;
+            const c = customersCache[idx];
+            if (!c) return;
+
+            if (!confirm('ต้องการลบลูกค้าคนนี้หรือไม่?')) return;
+
+            const cfg = getBackendEndpoint();
+            if (!cfg.base) {
+              console.warn('ยังไม่ได้ตั้งค่า Apps Script URL');
+              return;
+            }
+
+          // กำหนด rowIndex ให้ฝั่ง Apps Script ใช้อ้างอิงแถวในชีต
+          // ถ้า backend ส่ง field ระบุมาด้วย (เช่น _rowIndex / rowIndex / _row) ให้ใช้ค่านั้นก่อน
+          // ถ้าไม่มีก็ fallback เป็น index + 2 (เผื่อแถวที่ 1 เป็น header)
+          const rowIndex =
+            (typeof c._rowIndex === 'number') ? c._rowIndex :
+            (typeof c.rowIndex === 'number') ? c.rowIndex :
+            (typeof c._row === 'number') ? c._row :
+            (typeof idx === 'number' ? idx + 2 : null);
+
+          const payload = {
+            customer_id: c.customer_id || c.id || '',
+            email:       c.email || '',
+            name:        c.name || '',
+            rowIndex:    rowIndex
+          };
+
+            try {
+              const sep = cfg.base.includes('?') ? '&' : '?';
+              const url = cfg.base + sep + 'action=deleteCustomer&token=' + encodeURIComponent(cfg.token || '');
+              const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+
+              if (!res.ok) {
+                console.warn('ลบลูกค้าไม่สำเร็จ', res.status, res.statusText);
+              }
+            } catch (err) {
+              console.error('deleteCustomer error:', err);
+            } finally {
+              hdLoadCustomers();
+            }
+          }
+        });
+      }
+
+      function handleRouteChange(){
+        var hash = window.location.hash || '#/overview';
+        // ถ้า hash อยู่ที่หน้ารายชื่อลูกค้า ให้โหลดทุกครั้ง
+        if (hash.indexOf('#/customers/list') === 0) {
+          hdLoadCustomers();
+        }
+      }
+
+      // โหลดลูกค้าเมื่อเปิดหน้า ถ้า hash อยู่ที่ customers/list หรือถ้าเปิดไฟล์นี้แล้วเข้าหน้านี้โดยตรง
+      if (document.getElementById('customersListBody')) {
+        window.addEventListener('load', function () {
+          if (!window.location.hash || window.location.hash.indexOf('#/customers/list') === 0) {
+            hdLoadCustomers();
+          }
+        });
+      }
+
+      // เรียกเมื่อ hash เปลี่ยน (เปลี่ยนหน้า)
+      window.addEventListener('hashchange', handleRouteChange);
+
+      // ผูกกับเมนูด้านซ้าย "รายชื่อลูกค้า" เผื่อ router ภายนอกจัดการ hash เอง
+      var custNavLink = document.querySelector('a[href="#/customers/list"]');
+      if (custNavLink) {
+        custNavLink.addEventListener('click', function () {
+          // หน่วงนิดหน่อยให้ router เปลี่ยน view เสร็จก่อน
+          setTimeout(hdLoadCustomers, 50);
+        });
+      }
+
+      // เผื่อไฟล์อื่นอยากเรียกใช้งานตรง ๆ
+      window.hdLoadCustomers = hdLoadCustomers;
+    })();
+  </script>
+
+  <script>
+    // ลูกค้า: เพิ่มลูกค้าใหม่ (ส่งที่อยู่ครบทุกช่องไปที่ Apps Script)
+    (function(){
+      const addModal      = document.getElementById('addCustomerModal');
+      const addForm       = document.getElementById('addCustomerForm');
+      const btnOpenAdd    = document.getElementById('btnOpenAddCustomer');
+      const btnCloseAdd   = document.getElementById('btnCloseAddCustomer');
+      const btnCancelAdd  = document.getElementById('btnCancelAddCustomer');
+
+      function getBackendEndpoint() {
+        const base  = (window.HUG_GAS_BASE_URL) ||
+                      (window.HUG_DEFAULT_SETTINGS && window.HUG_DEFAULT_SETTINGS.appsScriptUrl) || '';
+        const token = (window.HUG_GAS_TOKEN) ||
+                      (window.HUG_DEFAULT_SETTINGS && window.HUG_DEFAULT_SETTINGS.apiToken) || '';
+        return { base, token };
+      }
+
+      function openAddCustomerModal() {
+        if (!addModal) return;
+        addModal.classList.add('show-modal');
+        addModal.style.display = 'flex';
+      }
+
+      function closeAddCustomerModal() {
+        if (!addModal) return;
+        addModal.classList.remove('show-modal');
+        addModal.style.display = 'none';
+        if (addForm) addForm.reset();
+      }
+
+      if (btnOpenAdd)   btnOpenAdd.addEventListener('click', openAddCustomerModal);
+      if (btnCloseAdd)  btnCloseAdd.addEventListener('click', closeAddCustomerModal);
+      if (btnCancelAdd) btnCancelAdd.addEventListener('click', closeAddCustomerModal);
+
+      if (addForm) {
+        addForm.addEventListener('submit', async function(e){
+          e.preventDefault();
+
+          const cfg = getBackendEndpoint();
+          if (!cfg.base) {
+            alert('ยังไม่ได้ตั้งค่า Apps Script URL');
+            return;
+          }
+
+          const payload = {
+            customer_id: document.getElementById('cu_customer_id').value || '',
+            name:        document.getElementById('cu_name').value || '',
+            email:       document.getElementById('cu_email').value || '',
+            phone:       document.getElementById('cu_phone').value || '',
+            country:     document.getElementById('cu_country').value || '',
+            postcode:    document.getElementById('cu_postcode').value || '',
+            addr1:       document.getElementById('cu_addr1').value || '',
+            addr2:       document.getElementById('cu_addr2').value || '',
+            subdistrict: document.getElementById('cu_subdistrict').value || '',
+            district:    document.getElementById('cu_district').value || '',
+            province:    document.getElementById('cu_province').value || '',
+            note:        document.getElementById('cu_note').value || ''
+          };
+
+          try {
+            const sep = cfg.base.includes('?') ? '&' : '?';
+            const url = cfg.base + sep + 'action=addCustomer&token=' + encodeURIComponent(cfg.token || '');
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type':'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+              console.warn('เพิ่มลูกค้าไม่สำเร็จ', res.status, res.statusText);
+              alert('เพิ่มลูกค้าไม่สำเร็จ (' + res.status + ')');
+            }
+          } catch (err) {
+            console.error('addCustomer error:', err);
+            alert('เกิดข้อผิดพลาดระหว่างบันทึกข้อมูลลูกค้า');
+          } finally {
+            closeAddCustomerModal();
+            if (window.hdLoadCustomers) window.hdLoadCustomers();
+          }
+        });
+      }
+    })();
+  </script>
 
 
   <script>
@@ -1402,7 +2018,7 @@
       // fallback constants for endpoint/token
       const STATIC_HUG_GAS_BASE_URL = typeof HUG_GAS_BASE_URL !== 'undefined'
         ? HUG_GAS_BASE_URL
-        : 'https://script.google.com/macros/s/AKfycby_lPNATr25RsNEGeRhbLFRiBkFWTU2DngA3amjBAjTvMXhCSdlt_5mICQNwjJUim-DyA/exec';
+        : 'https://script.google.com/macros/s/AKfycbz-BrzAu0TsD2M0fFxB0xLLyxAtz-1eqnX8GlOP_3bQDDDGXA1GCbsAQa7z6k-lIQNW_w/exec';
       const STATIC_HUG_GAS_TOKEN = typeof HUG_GAS_TOKEN !== 'undefined'
         ? HUG_GAS_TOKEN
         : 'CHANGE_ME_DEV';
@@ -1426,8 +2042,70 @@
       let masterProducts = [];
       window.hdMasterProducts = masterProducts; // เผื่ออนาคต script อื่นอยากใช้
 
+      const variantPanel = document.getElementById('stock-in-variants-panel');
+      const variantBody  = document.getElementById('stock-in-variants-body');
+      const variantCaption = document.getElementById('stock-in-variants-caption');
+      const qtyInput   = document.getElementById('stock_in_qty');
+      const costInput  = document.getElementById('stock_in_cost');
+
+      function formatVariantAttributes(v) {
+        if (!v) return '';
+        if (v.attributes) {
+          try {
+            const obj = typeof v.attributes === 'string'
+              ? JSON.parse(v.attributes)
+              : v.attributes;
+            if (obj && typeof obj === 'object') {
+              return Object.values(obj).filter(Boolean).join(' / ');
+            }
+          } catch (err) {
+            return String(v.attributes);
+          }
+        }
+        const parts = [];
+        if (v.color) parts.push(v.color);
+        if (v.size) parts.push(v.size);
+        if (v.style) parts.push(v.style);
+        if (v.opt1) parts.push(v.opt1);
+        if (v.opt2) parts.push(v.opt2);
+        return parts.join(' / ');
+      }
+
+      function buildVariantRowsForItem(item){
+        if (!variantBody) return;
+        const vars = Array.isArray(item.variants) ? item.variants : [];
+        if (!vars.length) {
+          variantBody.innerHTML = '<tr><td colspan="5" class="muted">สินค้าไม่มีตัวแปรย่อย</td></tr>';
+          return;
+        }
+        variantBody.innerHTML = '';
+        vars.forEach(v => {
+          const tr = document.createElement('tr');
+          const sku = v.sku || v.sku_variant || '';
+          const attrsText = formatVariantAttributes(v) || '-';
+          const currentQty = Number(
+            v.qty ??
+            v.quantity_on_hand ??
+            v.quantity ??
+            0
+          ) || 0;
+          tr.innerHTML =
+            `<td>${sku}</td>` +
+            `<td>${attrsText}</td>` +
+            `<td style="text-align:right">${currentQty}</td>` +
+            `<td style="text-align:right"><input type="number" class="input" min="0" placeholder="0" data-variant-sku="${sku}" data-field="qty_in"></td>` +
+            `<td style="text-align:right"><input type="number" class="input" min="0" step="0.01" placeholder="เช่น 120" data-variant-sku="${sku}" data-field="cost"></td>`;
+          variantBody.appendChild(tr);
+        });
+      }
+
       async function hdFetchMasterProductsFromSheet(){
         try {
+          const selectLoading = document.getElementById('in-product-select');
+          if (selectLoading) {
+            selectLoading.disabled = true;
+            selectLoading.innerHTML = '<option value="">กำลังโหลดสินค้า...</option>';
+          }
           const urlEl   = document.getElementById('appsScriptUrl');
           const tokenEl = document.getElementById('apiToken');
 
@@ -1464,6 +2142,11 @@
 
           if (!res.ok) {
             console.warn('โหลด Master Products จาก Apps Script ไม่สำเร็จ:', res.status, res.statusText);
+            const selectError = document.getElementById('in-product-select');
+            if (selectError) {
+              selectError.disabled = false;
+              selectError.innerHTML = '<option value="">ไม่สามารถโหลดข้อมูลสินค้าได้</option>';
+            }
             return null;
           }
 
@@ -1484,9 +2167,18 @@
           })).filter(p => p.master_sku);
 
           window.hdMasterProducts = masterProducts;
+          const selectLoading2 = document.getElementById('in-product-select');
+          if (selectLoading2) {
+            selectLoading2.disabled = false;
+          }
           return masterProducts;
         } catch (err) {
           console.warn('hdFetchMasterProductsFromSheet error:', err);
+          const selectError = document.getElementById('in-product-select');
+          if (selectError) {
+            selectError.disabled = false;
+            selectError.innerHTML = '<option value="">ไม่สามารถโหลดข้อมูลสินค้าได้</option>';
+          }
           return null;
         }
       }
@@ -1524,21 +2216,82 @@
         if (!select || !info) return;
 
         const sku = select.value.trim();
+
+        // กรณียังไม่เลือกสินค้า
         if (!sku) {
           info.textContent = 'คงเหลือปัจจุบัน: —';
+          if (variantPanel && variantBody) {
+            variantBody.innerHTML = '<tr><td colspan="5" class="muted">เลือกสินค้าด้านบนก่อน</td></tr>';
+            variantPanel.style.display = 'none';
+          }
+          if (qtyInput) {
+            qtyInput.disabled = false;
+            qtyInput.placeholder = 'เช่น 100';
+          }
+          if (costInput) {
+            costInput.disabled = false;
+            costInput.placeholder = 'เช่น 120';
+          }
           return;
         }
 
         const item = masterProducts.find(p => p.master_sku === sku);
         if (!item) {
           info.textContent = 'ไม่พบข้อมูลในระบบ (อาจยังไม่ได้บันทึกสินค้า หรือโหลดไม่สำเร็จ)';
+          if (variantPanel && variantBody) {
+            variantBody.innerHTML = '<tr><td colspan="5" class="muted">ไม่พบข้อมูลสินค้า</td></tr>';
+            variantPanel.style.display = 'none';
+          }
+          if (qtyInput) {
+            qtyInput.disabled = false;
+            qtyInput.placeholder = 'เช่น 100';
+          }
+          if (costInput) {
+            costInput.disabled = false;
+            costInput.placeholder = 'เช่น 120';
+          }
           return;
         }
 
         const total = item.total_stock ?? 0;
         const variantCount = item.variant_count ?? (item.variants ? item.variants.length : 0);
 
-        info.textContent = `คงเหลือปัจจุบัน: ${total} ชิ้น • ตัวเลือก: ${variantCount} แบบ`;
+        // ถ้ามีตัวแปรย่อย แสดงตารางตัวแปร + ปิดช่องจำนวน/ต้นทุนรวม
+        if (item.variants && item.variants.length) {
+          info.textContent = `คงเหลือปัจจุบัน: ${total} ชิ้น • ตัวเลือก: ${variantCount} แบบ`;
+          if (variantPanel && variantBody) {
+            buildVariantRowsForItem(item);
+            variantPanel.style.display = 'block';
+            if (variantCaption) {
+              variantCaption.textContent = `รับเข้าตัวแปรย่อยของ ${item.master_sku} – ${item.name}`;
+            }
+          }
+          if (qtyInput) {
+            qtyInput.disabled = true;
+            qtyInput.value = '';
+            qtyInput.placeholder = 'ใช้ตารางด้านล่างแทนการกรอกจำนวนรวม';
+          }
+          if (costInput) {
+            costInput.disabled = true;
+            costInput.value = '';
+            costInput.placeholder = 'ใช้ตารางด้านล่างแทนการกรอกต้นทุนรวม';
+          }
+        } else {
+          // ไม่มีตัวแปรย่อย ใช้จำนวน/ต้นทุนรวมแบบเดิม
+          info.textContent = `คงเหลือปัจจุบัน: ${total} ชิ้น`;
+          if (variantPanel && variantBody) {
+            variantBody.innerHTML = '<tr><td colspan="5" class="muted">สินค้าไม่มีตัวแปรย่อย ใช้จำนวนและต้นทุนรวมด้านบนได้เลย</td></tr>';
+            variantPanel.style.display = 'none';
+          }
+          if (qtyInput) {
+            qtyInput.disabled = false;
+            qtyInput.placeholder = 'เช่น 100';
+          }
+          if (costInput) {
+            costInput.disabled = false;
+            costInput.placeholder = 'เช่น 120';
+          }
+        }
       }
 
       // ฟังก์ชันนี้คงชื่อเดิมไว้ เพื่อไม่ให้ script ส่วนอื่นพัง
