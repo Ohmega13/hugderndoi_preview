@@ -4,14 +4,265 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>HUGDERNDOI | Dashboard</title>
-
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0b0f17;
+      --sidebar: #0f172a; /* slate-900 */
+      --sidebar-hover: #111827; /* gray-900 */
+      --surface: #0b1220; /* dark panel */
+      --panel: #111827; 
+      --card: #1f2937; /* gray-800 */
+      --muted: #9ca3af; /* gray-400 */
+      --text: #e5e7eb; /* gray-200 */
+      --title: #f3f4f6; /* gray-100 */
+      --accent: #3b82f6; /* blue-500 */
+      --accent-2: #8b5cf6; /* violet-500 */
+      --success: #22c55e; /* green-500 */
+      --warn: #f59e0b; /* amber-500 */
+      --danger: #ef4444; /* red-500 */
+      --shadow: 0 10px 25px rgba(0,0,0,.25);
+      --radius: 16px;
+      --radius-sm: 12px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:linear-gradient(180deg,#0b0f17 0%, #0b1220 100%);
+      color:var(--text); font-family:"Noto Sans Thai", "Poppins", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    }
+    .layout{display:grid; grid-template-columns: 260px 1fr; min-height:100vh}
+    /* Sidebar */
+    .sidebar{background:var(--sidebar); padding:24px 16px; position:sticky; top:0; height:100vh; border-right:1px solid rgba(255,255,255,.06)}
+    .brand{display:flex; align-items:center; gap:12px; padding:8px 12px; margin-bottom:18px}
+    .brand .logo{width:36px; height:36px; border-radius:12px; display:grid; place-items:center; background:linear-gradient(135deg,#22d3ee,#6366f1)}
+    .brand h1{font-size:18px; letter-spacing:.4px; margin:0; color:#fff}
+    .nav{margin-top:10px; display:flex; flex-direction:column; gap:6px}
+    .nav a{display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:12px; color:var(--text); text-decoration:none; transition:all .2s ease; font-weight:500}
+    .nav a:hover{background:rgba(255,255,255,.06)}
+    .nav a.active{background:linear-gradient(135deg, rgba(59,130,246,.25), rgba(99,102,241,.25)); border:1px solid rgba(99,102,241,.35); color:#fff}
+    .nav svg{width:18px; height:18px; opacity:.9}
+    .logout{margin-top:auto; padding-top:12px; border-top:1px dashed rgba(255,255,255,.08)}
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="./assets/css/base.css">
-  <link rel="stylesheet" href="./assets/css/dashboard.css">
+    /* Main */
+    .main{padding:24px 28px}
+    .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px}
+    .title{font-size:22px; color:#fff; font-weight:700}
+    .avatar{width:36px; height:36px; border-radius:50%; background:url('https://i.pravatar.cc/72?img=12') center/cover no-repeat; border:2px solid rgba(255,255,255,.15)}
+
+    /* Stat grid */
+    .grid{display:grid; gap:18px}
+    .grid.stats{grid-template-columns: repeat(12, 1fr)}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.06); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow)}
+    .card h3{margin:0 0 6px 0; font-size:14px; font-weight:600; color:var(--muted)}
+    .metric{display:flex; align-items:center; gap:10px}
+    .metric .value{font-size:22px; font-weight:800; color:#fff}
+    .badge{padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; border:1px solid rgba(255,255,255,.1)}
+    .b-blue{background:rgba(59,130,246,.1); color:#93c5fd}
+    .b-violet{background:rgba(139,92,246,.12); color:#c4b5fd}
+    .b-green{background:rgba(34,197,94,.12); color:#86efac}
+    .b-amber{background:rgba(245,158,11,.12); color:#fcd34d}
+    .b-red{background:rgba(239,68,68,.12); color:#fca5a5}
+
+    /* Columns */
+    .col-4{grid-column: span 4}
+    .col-3{grid-column: span 3}
+    .col-6{grid-column: span 6}
+    .col-12{grid-column: span 12}
+
+    /* Charts / panels */
+    .panel-title{font-size:15px; font-weight:700; color:#fff; margin-bottom:10px}
+    canvas{width:100%; height:260px}
+
+    /* Info ribbon */
+    .ribbon{position:fixed; left:260px; right:0; bottom:0; background:rgba(17,24,39,.75); backdrop-filter: blur(6px); color:var(--muted); padding:10px 18px; font-size:12.5px; border-top:1px solid rgba(255,255,255,.06)}
+
+    /* Responsive */
+    @media (max-width: 1080px){
+      .layout{grid-template-columns: 84px 1fr}
+      .brand h1{display:none}
+      .nav a span{display:none}
+      .nav a{justify-content:center}
+      .ribbon{left:84px}
+    }
+    @media (max-width: 780px){
+      .layout{grid-template-columns: 1fr}
+      .sidebar{position:relative; height:auto}
+      .ribbon{left:0}
+      .grid.stats{grid-template-columns: repeat(6, 1fr)}
+      .col-4{grid-column: span 6}
+      .col-3{grid-column: span 3}
+      .col-6{grid-column: span 6}
+      .col-12{grid-column: span 6}
+    }
+      /* Submenu styles */
+    .menu-group{border:1px solid rgba(255,255,255,.06); border-radius:12px; overflow:hidden; background:rgba(255,255,255,.02)}
+    .menu-group + .menu-group{margin-top:8px}
+    .menu-group summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:12px; padding:12px 14px; color:var(--text)}
+    .menu-group[open] summary{background:rgba(255,255,255,.04)}
+    .menu-group summary::-webkit-details-marker{display:none}
+    .menu-group .caret{margin-left:auto; transition:transform .2s ease; opacity:.75}
+    .menu-group[open] .caret{transform:rotate(180deg)}
+    .submenu{display:flex; flex-direction:column; padding:8px}
+    .submenu a{padding:10px 12px; border-radius:10px; text-decoration:none; color:var(--muted)}
+    .submenu a:hover{background:rgba(255,255,255,.06); color:#fff}
+
+      .muted{color:var(--muted)}
+    .hidden{display:none}
+    .view{animation:fade .2s ease}
+    @keyframes fade{from{opacity:.6; transform:translateY(4px)} to{opacity:1; transform:none}}
+      .muted{color:var(--muted)}
+    .hidden{display:none}
+    .view{animation:fade .2s ease}
+    @keyframes fade{from{opacity:.6; transform:translateY(4px)} to{opacity:1; transform:none}}
+
+    /* UI kit */
+    .toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px}
+    .btn{appearance:none; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:#fff; padding:10px 14px; border-radius:10px; font-weight:600; cursor:pointer}
+    .btn:hover{background:rgba(255,255,255,.08)}
+    .btn.primary{background:linear-gradient(135deg, rgba(59,130,246,.25), rgba(99,102,241,.25)); border-color:rgba(99,102,241,.35)}
+    .btn.success{background:rgba(34,197,94,.15); border-color:rgba(34,197,94,.35)}
+    .btn.warn{background:rgba(245,158,11,.15); border-color:rgba(245,158,11,.35)}
+    .btn.danger{background:rgba(239,68,68,.15); border-color:rgba(239,68,68,.35)}
+    .field{position:relative}
+    .input, .select{background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12); color:#fff; padding:10px 12px; border-radius:10px}
+    .input::placeholder{color:rgba(229,231,235,.55)}
+
+    .table{width:100%; border-collapse:separate; border-spacing:0;}
+    .table th, .table td{padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.06); text-align:left}
+    .table th{color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.04em}
+    .table tr:hover td{background:rgba(255,255,255,.03)}
+    .product-master-row{
+      background:rgba(255,255,255,.03);
+      font-weight:600;
+    }
+    .product-master-row td{
+      border-bottom-color:rgba(255,255,255,.08);
+    }
+    .variant-row td{
+      font-size:13px;
+    }
+    .variant-row td:nth-child(4){
+      padding-left:28px;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .pill{padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; border:1px solid rgba(255,255,255,.12)}
+    .pill.gray{background:rgba(255,255,255,.06); color:#e5e7eb}
+    .pill.blue{background:rgba(59,130,246,.15); color:#bfdbfe}
+    .pill.green{background:rgba(34,197,94,.15); color:#bbf7d0}
+    .pill.orange{background:rgba(245,158,11,.15); color:#fde68a}
+    .pill.red{background:rgba(239,68,68,.15); color:#fecaca}
+
+    .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+    .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+    .grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+    .form label{font-size:13px; color:var(--muted); display:block; margin-bottom:6px}
+
+    /* Adjust spacing for form grids inside modals */
+    .modal .grid-3,
+    .modal .grid-4 {
+      display: grid;
+      gap: 1.2rem 1rem; /* more space vertically and horizontally */
+      margin-bottom: 0.8rem;
+    }
+
+    /* Fix input fields overflowing in modal */
+    .modal .input,
+    .modal .select {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 768px) {
+      .modal .grid-4,
+      .modal .grid-3 {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+      }
+    }
+    /* Modal */
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.55);
+      backdrop-filter: blur(4px);
+      display:none;
+      align-items:flex-start;
+      justify-content:center;
+      padding-top:40px;
+      z-index:9990;
+    }
+
+    .modal{
+      width:960px;
+      max-width:96vw;
+      max-height:90vh;
+      overflow:auto;
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+    .modal header{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px}
+    .modal h4{margin:0; font-size:18px; color:#fff}
+    .modal .close{appearance:none; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:#fff; width:36px; height:36px; border-radius:10px; cursor:pointer}
+    .modal footer{display:flex; gap:10px; justify-content:flex-end; margin-top:12px}
+    .progress-modal{
+      max-width:380px;
+      padding:16px 18px 14px;
+    }
+    .spinner{
+      width:18px;
+      height:18px;
+      border-radius:999px;
+      border:2px solid rgba(148,163,184,.4);
+      border-top-color:#38bdf8;
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin{
+      to{ transform:rotate(360deg); }
+    }
+    .show-modal{display:flex}
+    /* Toast */
+    .toast{position:fixed; right:20px; bottom:60px; background:rgba(17,24,39,.95); color:#fff; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.12); box-shadow:var(--shadow); opacity:0; transform:translateY(6px); transition:all .2s ease; z-index:9999}
+    .toast.show{opacity:1; transform:translateY(0)}
+    .toast.success{border-color:rgba(34,197,94,.35)}
+    .toast.error{border-color:rgba(239,68,68,.35)}
+
+      .muted{color:var(--muted)}
+    .hidden{display:none}
+    .view{animation:fade .2s ease}
+    @keyframes fade{from{opacity:.6; transform:translateY(4px)} to{opacity:1; transform:none}}
+
+    /* UI kit */
+    .toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px}
+    .btn{appearance:none; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:#fff; padding:10px 14px; border-radius:10px; font-weight:600; cursor:pointer}
+    .btn:hover{background:rgba(255,255,255,.08)}
+    .btn.primary{background:linear-gradient(135deg, rgba(59,130,246,.25), rgba(99,102,241,.25)); border-color:rgba(99,102,241,.35)}
+    .btn.success{background:rgba(34,197,94,.15); border-color:rgba(34,197,94,.35)}
+    .btn.warn{background:rgba(245,158,11,.15); border-color:rgba(245,158,11,.35)}
+    .btn.danger{background:rgba(239,68,68,.15); border-color:rgba(239,68,68,.35)}
+    .field{position:relative}
+    .input, .select, .textarea{background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12); color:#fff; padding:10px 12px; border-radius:10px}
+    .textarea{min-height:96px; resize:vertical}
+    .input::placeholder{color:rgba(229,231,235,.55)}
+
+    .table{width:100%; border-collapse:separate; border-spacing:0;}
+    .table th, .table td{padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.06); text-align:left}
+    .table th{color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.04em}
+    .table tr:hover td{background:rgba(255,255,255,.03)}
+    .pill{padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; border:1px solid rgba(255,255,255,.12)}
+
+    .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+    .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+    .grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+    .form label{font-size:13px; color:var(--muted); display:block; margin-bottom:6px}
+  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
   <div class="layout">
@@ -19,6 +270,7 @@
     <aside class="sidebar">
       <div class="brand">
         <div class="logo">
+          <!-- simple brand mark -->
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" stroke="#fff" stroke-opacity=".9" stroke-width="1.4"/>
             <circle cx="12" cy="12" r="2.6" fill="#fff" fill-opacity=".9"/>
@@ -28,13 +280,10 @@
       </div>
 
       <nav class="nav">
-        <a class="active" href="#/overview">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M3 12l9-8 9 8v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-8z" stroke="currentColor" stroke-width="1.6"/>
-          </svg>
-          <span>ภาพรวม</span>
-        </a>
+        <!-- Overview -->
+        <a class="active" href="#/overview"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12l9-8 9 8v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-8z" stroke="currentColor" stroke-width="1.6"/></svg><span>ภาพรวม</span></a>
 
+        <!-- Orders Group -->
         <details class="menu-group" open>
           <summary>
             <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -50,6 +299,7 @@
           </div>
         </details>
 
+        <!-- Products Group -->
         <details class="menu-group">
           <summary>
             <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16" stroke="currentColor" stroke-width="1.6"/></svg>
@@ -64,6 +314,7 @@
           </div>
         </details>
 
+        <!-- Customers Group -->
         <details class="menu-group">
           <summary>
             <svg viewBox="0 0 24 24" fill="none"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 21a9 9 0 0 1 18 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -77,6 +328,7 @@
           </div>
         </details>
 
+        <!-- Expenses Group -->
         <details class="menu-group">
           <summary>
             <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M5 20h14a3 3 0 0 0 0-6H5a3 3 0 0 0 0 6z" stroke="currentColor" stroke-width="1.6"/></svg>
@@ -89,24 +341,14 @@
           </div>
         </details>
 
-        <a href="#/summary">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16M10 4v16" stroke="currentColor" stroke-width="1.6"/></svg>
-          <span>สรุปยอด</span>
-        </a>
+        <a href="#/summary"><svg viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16M10 4v16" stroke="currentColor" stroke-width="1.6"/></svg><span>สรุปยอด</span></a>
 
-        <a href="#/settings">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" stroke="currentColor" stroke-width="1.6"/><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1 1 0 0 1-1.4 1.4l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V19a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-.6 1 1 0 0 0-.9-.6 1 1 0 0 0-.9.6 1 1 0 0 1-1 .6H8a1 1 0 0 1-1-1v-.1a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1A1 1 0 1 1 3.8 16l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H3a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-.9 1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1A1 1 0 1 1 5 6.4l.1.1a1 1 0 0 0 1.1.2h.1A1 1 0 0 0 6.9 6V6a1 1 0 0 1 1-1h1a1 1 0 0 1 1 .6 1 1 0 0 0 .9.6 1 1 0 0 0 .9-.6 1 1 0 0 1 1-.6h1a1 1 0 0 1 1 1v.1a1 1 0 0 0 .6.9h.1a1 1 0 0 0 1.1-.2l.1-.1A1 1 0 1 1 20.2 8l-.1.1a1 1 0 0 0-.2 1.1v.1a1 1 0 0 0 .9.6H21a1 1 0 0 1 1 1v1a1 1 0 0 1-1 .9h-.1a1 1 0 0 0-.9.6z" stroke="currentColor" stroke-width="1.2"/></svg>
-          <span>ตั้งค่า</span>
-        </a>
+        <a href="#/settings"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" stroke="currentColor" stroke-width="1.6"/><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1 1 0 0 1-1.4 1.4l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V19a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-.6 1 1 0 0 0-.9-.6 1 1 0 0 0-.9.6 1 1 0 0 1-1 .6H8a1 1 0 0 1-1-1v-.1a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1A1 1 0 1 1 3.8 16l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H3a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-.9 1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1A1 1 0 1 1 5 6.4l.1.1a1 1 0 0 0 1.1.2h.1A1 1 0 0 0 6.9 6V6a1 1 0 0 1 1-1h1a1 1 0 0 1 1 .6 1 1 0 0 0 .9.6 1 1 0 0 0 .9-.6 1 1 0 0 1 1-.6h1a1 1 0 0 1 1 1v.1a1 1 0 0 0 .6.9h.1a1 1 0 0 0 1.1-.2l.1-.1A1 1 0 1 1 20.2 8l-.1.1a1 1 0 0 0-.2 1.1v.1a1 1 0 0 0 .9.6H21a1 1 0 0 1 1 1v1a1 1 0 0 1-1 .9h-.1a1 1 0 0 0-.9.6z" stroke="currentColor" stroke-width="1.2"/></svg><span>ตั้งค่า</span></a>
       </nav>
 
       <div class="logout">
-        <a href="#" class="nav-item logout-link">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M10 17l5-5-5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M15 12H3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            <path d="M21 4v16a2 2 0 0 1-2 2h-7" stroke="currentColor" stroke-width="1.6"/>
-          </svg>
+        <a href="#" class="nav-item" style="display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:12px; text-decoration:none; color:var(--muted); margin-top:8px">
+          <svg viewBox="0 0 24 24" fill="none" style="width:18px;height:18px"><path d="M10 17l5-5-5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 12H3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M21 4v16a2 2 0 0 1-2 2h-7" stroke="currentColor" stroke-width="1.6"/></svg>
           <span>ออกจากระบบ</span>
         </a>
       </div>
@@ -119,8 +361,9 @@
         <div class="avatar" aria-label="user"></div>
       </div>
 
-      <!-- === Overview View === -->
+      <!-- ROUTER VIEWS: sections are swapped by hash without any data calls -->
       <section id="view-overview" class="view">
+        <!-- Stats -->
         <section class="grid stats">
           <div class="card col-4">
             <h3>ยอดขายทั้งหมด</h3>
@@ -139,7 +382,7 @@
           <div class="card col-4">
             <h3>ยอดขายวันนี้</h3>
             <div class="metric">
-              <div id="ov_today_revenue" class="value">฿0.00</div>
+              <div id="ov_today_revenue" class="value" style="color:var(--success)">฿0.00</div>
               <span class="badge b-green">วันนี้</span>
             </div>
           </div>
@@ -158,16 +401,17 @@
               <span class="badge b-blue">พร้อมแพ็ก</span>
             </div>
           </div>
-          <div class="card col-6 low-stock-card">
+          <div class="card col-6" style="border:1px solid rgba(239,68,68,.35); background:linear-gradient(180deg, rgba(239,68,68,.08), rgba(239,68,68,.04));">
             <h3>จำนวนตัวแปรสต็อกต่ำ</h3>
             <div class="metric">
-              <div id="ov_low_stock_count" class="value">0 รายการ</div>
+              <div id="ov_low_stock_count" class="value" style="color:var(--danger)">0 รายการ</div>
               <span class="badge b-red">ตรวจสอบคลัง</span>
             </div>
           </div>
         </section>
 
-        <section class="grid charts-2col">
+        <!-- Charts -->
+        <section class="grid" style="margin-top:18px; grid-template-columns: repeat(12, 1fr); gap:18px">
           <div class="card col-6">
             <div class="panel-title">ยอดขาย 7 วันล่าสุด</div>
             <canvas id="sales7"></canvas>
@@ -187,324 +431,789 @@
         </section>
       </section>
 
-
-      <!-- === Orders / Products / Customers / Expenses / Summary / Settings === -->
-
-      <!-- === Products: All Products (List + Popup) === -->
-      <section id="view-products-all" class="view hidden">
-        <!-- Page header -->
-        <div class="page-header">
-          <div>
-            <h2>สินค้าทั้งหมด</h2>
-            <p class="muted small">จัดการรายการสินค้า, ตัวเลือก และสต็อกทั้งหมดในระบบ</p>
-          </div>
-          <div class="page-actions">
-            <button id="pd-btn-add-product" class="btn primary">
-              + เพิ่มสินค้า
-            </button>
-          </div>
-        </div>
-
-        <!-- Filters toolbar -->
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <label class="field">
-              <span>ค้นหาสินค้า</span>
-              <input
-                id="pd-search"
-                class="input"
-                placeholder="พิมพ์ชื่อสินค้า, SKU หรือบาร์โค้ด"
-              />
-            </label>
-
-            <label class="field">
-              <span>หมวดหมู่</span>
-              <select id="pd-filter-category" class="input">
-                <option value="">ทั้งหมด</option>
-              </select>
-            </label>
-
-            <label class="field">
-              <span>สถานะ</span>
-              <select id="pd-filter-status" class="input">
-                <option value="">ทั้งหมด</option>
-                <option value="active">เปิดขาย</option>
-                <option value="draft">ฉบับร่าง</option>
-                <option value="hidden">ซ่อน</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="toolbar-right">
-            <button id="pd-btn-reload" class="btn ghost">รีโหลด</button>
-          </div>
-        </div>
-
-        <!-- Products table -->
+      <!-- Orders Pages -->
+      <section id="view-orders-all" class="view hidden">
         <div class="card">
-          <div class="table-wrapper">
-            <table class="table" id="pd-table">
+          <div class="panel-title">ออเดอร์ทั้งหมด</div>
+          <div class="toolbar">
+            <input class="input" placeholder="ค้นหาเลขออเดอร์ / ชื่อลูกค้า" style="min-width:280px">
+            <select class="select">
+              <option>สถานะทั้งหมด</option>
+              <option>รอชำระ</option>
+              <option>จ่ายแล้ว</option>
+              <option>พร้อมแพ็ก</option>
+              <option>ส่งแล้ว</option>
+              <option>ยกเลิก</option>
+            </select>
+            <input class="input" type="date">
+            <button class="btn primary">+ สร้างออเดอร์</button>
+            <!-- Create Order Modal -->
+            <div id="createOrderModal" class="modal-backdrop" aria-hidden="true">
+              <div class="modal" role="dialog" aria-modal="true" aria-labelledby="createOrderTitle">
+                <header>
+                  <h4 id="createOrderTitle">สร้างออเดอร์</h4>
+                  <button class="close" id="btnCloseCreateOrder" title="ปิด">×</button>
+                </header>
+                <form id="createOrderForm" class="form">
+                  <div class="grid-3">
+                    <div>
+                      <label>เลขออเดอร์ (ปล่อยว่างเพื่อให้ระบบสร้าง)</label>
+                      <input id="co_order_id" class="input" placeholder="AUTO">
+                    </div>
+                    <div>
+                      <label>วันที่สั่งซื้อ</label>
+                      <input id="co_order_date" class="input" type="date">
+                    </div>
+                    <div>
+                      <label>สถานะ</label>
+                      <select id="co_status" class="select">
+                        <option value="รอชำระ">รอชำระ</option>
+                        <option value="จ่ายแล้ว">จ่ายแล้ว</option>
+                        <option value="พร้อมแพ็ก">พร้อมแพ็ก</option>
+                        <option value="ส่งแล้ว">ส่งแล้ว</option>
+                        <option value="ยกเลิก">ยกเลิก</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="grid-3">
+                    <div>
+                      <label>ชื่อลูกค้า</label>
+                      <input id="co_customer_name" class="input" placeholder="ชื่อ-นามสกุล / ชื่อร้าน">
+                    </div>
+                    <div>
+                      <label>อีเมล (ถ้ามี)</label>
+                      <input id="co_customer_email" class="input" type="email" placeholder="name@example.com">
+                    </div>
+                    <div>
+                      <label>เบอร์โทร (ถ้ามี)</label>
+                      <input id="co_customer_phone" class="input" placeholder="08x-xxx-xxxx">
+                    </div>
+                  </div>
+                  <!-- Address Section -->
+                  <div class="grid-3">
+                    <div>
+                      <label>ชื่อผู้รับ</label>
+                      <input id="co_recipient_name" class="input" placeholder="ชื่อผู้รับ" required>
+                    </div>
+                    <div>
+                      <label>เบอร์โทรผู้รับ</label>
+                      <input id="co_recipient_phone" class="input" placeholder="08x-xxx-xxxx" required>
+                    </div>
+                    <div>
+                      <label>ประเทศ</label>
+                      <input id="co_country" class="input" value="Thailand" placeholder="ประเทศ">
+                    </div>
+                  </div>
+
+                  <div class="grid-4">
+                    <div>
+                      <label>บ้านเลขที่ / อาคาร-ชั้น / ห้อง</label>
+                      <input id="co_addr1" class="input" placeholder="99/123 อาคาร ABC ชั้น 5 ห้อง 501" required>
+                    </div>
+                    <div>
+                      <label>หมู่บ้าน/คอนโด / ซอย / ถนน</label>
+                      <input id="co_addr2" class="input" placeholder="หมู่บ้าน..., ซอย..., ถนน...">
+                    </div>
+                    <div>
+                      <label>ตำบล/แขวง</label>
+                      <input id="co_subdistrict" class="input" placeholder="ตำบล/แขวง" required>
+                    </div>
+                    <div>
+                      <label>อำเภอ/เขต</label>
+                      <input id="co_district" class="input" placeholder="อำเภอ/เขต" required>
+                    </div>
+                  </div>
+
+                  <div class="grid-3">
+                    <div>
+                      <label>จังหวัด</label>
+                      <select id="co_province" class="select"></select>
+                    </div>
+                    <div>
+                      <label>รหัสไปรษณีย์</label>
+                      <input id="co_postcode" class="input" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="10110" required>
+                    </div>
+                    <div>
+                      <label>จุดสังเกต/หมายเหตุการส่ง (ถ้ามี)</label>
+                      <input id="co_shipping_note" class="input" placeholder="เช่น โทรก่อนถึง, ฝากไว้ป้อมยาม">
+                    </div>
+                  </div>
+                  <div class="grid-3">
+                    <div>
+                      <label>ยอดสุทธิ (เริ่มต้น)</label>
+                      <input id="co_total" class="input" type="number" step="0.01" placeholder="0.00" value="0">
+                    </div>
+                    <div>
+                      <label>หมายเหตุ</label>
+                      <input id="co_note" class="input" placeholder="บันทึกเพิ่มเติม">
+                    </div>
+                    <div style="display:flex; align-items:end; gap:10px; justify-content:flex-end">
+                      <button type="button" class="btn" id="btnCancelCreateOrder">ยกเลิก</button>
+                      <button type="submit" class="btn success" id="btnSubmitCreateOrder">บันทึกออเดอร์</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <table class="table">
+            <thead>
+              <tr><th>เลขออเดอร์</th><th>ลูกค้า</th><th>วันที่</th><th>ยอดสุทธิ</th><th>สถานะ</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr><td>ORD-00001</td><td>—</td><td>—</td><td>฿0.00</td><td><span class="pill gray">รอดึงข้อมูล</span></td><td><button class="btn">ดูรายละเอียด</button></td></tr>
+              <tr><td>ORD-00002</td><td>—</td><td>—</td><td>฿0.00</td><td><span class="pill gray">รอดึงข้อมูล</span></td><td><button class="btn">ดูรายละเอียด</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="view-orders-pending" class="view hidden">
+        <div class="card">
+          <div class="panel-title">ออเดอร์รอชำระ</div>
+          <div class="toolbar">
+            <input class="input" placeholder="ค้นหา…"><button class="btn">กรอง</button>
+          </div>
+          <table class="table">
+            <thead><tr><th>เลขออเดอร์</th><th>ลูกค้า</th><th>ยอด</th><th>กำหนดชำระ</th><th>สถานะ</th><th></th></tr></thead>
+            <tbody><tr><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="pill orange">Pending</span></td><td><button class="btn success">ทำเครื่องหมายว่าชำระแล้ว</button></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="view-orders-pack" class="view hidden">
+        <div class="card">
+          <div class="panel-title">พร้อมแพ็ก</div>
+          <div class="toolbar"><input class="input" placeholder="ค้นหา…"><button class="btn">พิมพ์ใบแพ็ก</button></div>
+          <table class="table">
+            <thead><tr><th>ออเดอร์</th><th>จำนวนชิ้น</th><th>ที่อยู่จัดส่ง</th><th></th></tr></thead>
+            <tbody><tr><td>—</td><td>—</td><td>—</td><td><button class="btn primary">ทำเป็นส่งแล้ว</button></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="view-orders-shipped" class="view hidden">
+        <div class="card">
+          <div class="panel-title">ส่งแล้ว</div>
+          <div class="toolbar"><input class="input" placeholder="ค้นหา Tracking"><button class="btn">กรอง</button></div>
+          <table class="table">
+            <thead><tr><th>ออเดอร์</th><th>บริษัทขนส่ง</th><th>เลขพัสดุ</th><th>วันที่ส่ง</th><th>สถานะ</th></tr></thead>
+            <tbody><tr><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="pill blue">Shipped</span></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="view-orders-canceled" class="view hidden">
+        <div class="card">
+          <div class="panel-title">ออเดอร์ยกเลิก</div>
+          <div class="toolbar"><input class="input" placeholder="เหตุผลยกเลิก…"></div>
+          <table class="table">
+            <thead><tr><th>ออเดอร์</th><th>ลูกค้า</th><th>เหตุผล</th><th>โดย</th><th>วันที่</th></tr></thead>
+            <tbody><tr><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Products Pages -->
+      <section id="view-products-all" class="view hidden">
+        <div class="card">
+          <div class="panel-title">สินค้าทั้งหมด</div>
+          <div class="toolbar">
+            <input class="input" placeholder="ค้นหา SKU / ชื่อสินค้า" style="min-width:280px">
+            <select class="select"><option>ทุกสี</option><option>ดำ</option><option>ขาว</option></select>
+            <select class="select"><option>ทุกไซส์</option><option>S</option><option>M</option><option>L</option></select>
+            <button id="btnOpenAddProduct" class="btn primary">+ เพิ่มสินค้า</button>
+  <!-- Add Product Modal -->
+  <div id="addProductModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addProductTitle">
+      <header>
+        <h4 id="addProductTitle">เพิ่มสินค้า</h4>
+        <button class="close" id="btnCloseAddProduct" title="ปิด">×</button>
+      </header>
+      <form id="addProductForm" class="form">
+        <div class="grid-2">
+          <div>
+            <label>รหัสรุ่นสินค้า (product_id) – ว่างได้ ระบบจะสร้างให้</label>
+            <input id="ap_product_id" class="input" placeholder="AUTO">
+          </div>
+          <div>
+            <label>SKU ตัวแปร (sku_variant)</label>
+            <input id="ap_sku_variant" class="input" placeholder="HDP-001-BL-L" required>
+          </div>
+          <div>
+            <label>ชื่อสินค้า</label>
+            <input id="ap_name" class="input" placeholder="HUGDERNDOI Signature Pants" required>
+          </div>
+          <div>
+            <label>ทุนต่อชิ้น (cost_price)</label>
+            <input id="ap_cost" type="number" step="0.01" class="input" placeholder="120" required>
+          </div>
+          <div>
+            <label>Reorder Point</label>
+            <input id="ap_reorder" type="number" class="input" placeholder="10" value="10">
+          </div>
+          <!-- Hidden legacy fields for compatibility with existing JS (global price & qty) -->
+          <div style="display:none">
+            <label>ราคาขาย (legacy)</label>
+            <input id="ap_price" type="number" step="0.01" class="input" value="0">
+          </div>
+          <div style="display:none">
+            <label>จำนวนเริ่มต้นในคลัง (legacy)</label>
+            <input id="ap_qty" type="number" class="input" value="0">
+          </div>
+
+          <!-- ตัวเลือกสินค้า 2 ระดับ (กำหนดชื่อ + ค่า) -->
+          <div style="grid-column:1/-1; margin-top:0.75rem; font-size:12px; color:var(--muted); font-weight:600;">
+            ตัวเลือกสินค้า 2 ระดับ (เหมือนหน้าเพิ่มสินค้าของ Shopee)
+          </div>
+          <div>
+            <label>ชื่อตัวเลือกที่ 1</label>
+            <input id="ap_opt1_name" class="input" placeholder="เช่น สี" value="สี">
+          </div>
+          <div>
+            <label>ค่าตัวเลือกที่ 1</label>
+            <input id="ap_opt1_values" class="input" placeholder="เช่น แดง, เหลือง, ดำ">
+          </div>
+          <div>
+            <label>ชื่อตัวเลือกที่ 2</label>
+            <input id="ap_opt2_name" class="input" placeholder="เช่น ไซส์" value="ไซส์">
+          </div>
+          <div>
+            <label>ค่าตัวเลือกที่ 2</label>
+            <input id="ap_opt2_values" class="input" placeholder="เช่น S, M, L, XL">
+          </div>
+          <div style="grid-column:1/-1; display:flex; justify-content:flex-end; margin-top:4px;">
+            <button type="button" class="btn" id="ap_btnBuildVariants">อัปเดตตารางตัวแปร</button>
+          </div>
+        </div>
+
+        <!-- ตารางตัวแปรสินค้า (เหมือน Shopee: ตัวเลือกที่ 1 x ตัวเลือกที่ 2) -->
+        <div style="margin-top:14px">
+          <label style="font-size:13px; color:var(--muted); display:block; margin-bottom:6px;">รายการตัวเลือกสินค้า</label>
+
+          <!-- Bulk apply controls for price & stock -->
+          <div class="toolbar" style="margin:6px 0 10px; gap:8px; align-items:center; flex-wrap:wrap;">
+            <div style="display:flex; gap:6px; align-items:center;">
+              <span class="muted" style="font-size:12px;">ราคาขายเดียวกัน</span>
+              <input id="ap_bulk_price" class="input" type="number" step="0.01" placeholder="เช่น 199" style="max-width:120px;">
+              <button type="button" class="btn" id="ap_btnApplyPrice">ใช้ราคาเดียวกันทั้งหมด</button>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <span class="muted" style="font-size:12px;">สต็อกเริ่มต้น</span>
+              <input id="ap_bulk_stock" class="input" type="number" placeholder="เช่น 10" style="max-width:120px;">
+              <button type="button" class="btn" id="ap_btnApplyStock">สต็อกเริ่มต้นเท่ากันทั้งหมด</button>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <span class="muted" style="font-size:12px;">เลข SKU</span>
+              <button type="button" class="btn" id="ap_btnAutoSku">สร้าง SKU อัตโนมัติ</button>
+            </div>
+          </div>
+
+          <div style="max-height:260px; overflow:auto; border-radius:12px; border:1px solid rgba(255,255,255,.06);">
+            <table class="table">
               <thead>
                 <tr>
-                  <th style="width: 40px;"></th>
-                  <th>สินค้า</th>
-                  <th>ตัวเลือก</th>
-                  <th>ราคา (฿)</th>
-                  <th>สต็อก</th>
-                  <th>ขายแล้ว</th>
-                  <th>หมวดหมู่</th>
-                  <th>สถานะ</th>
-                  <th style="width: 80px;">จัดการ</th>
+                  <th id="ap_head_opt1">ตัวเลือกที่ 1</th>
+                  <th id="ap_head_opt2">ตัวเลือกที่ 2</th>
+                  <th>ราคาขาย</th>
+                  <th>สต็อกเริ่มต้น</th>
+                  <th>เลข SKU</th>
                 </tr>
               </thead>
-              <tbody id="pd-tbody"></tbody>
+              <tbody id="ap_variantTableBody">
+                <tr>
+                  <td colspan="5" class="muted">กรอกค่าตัวเลือกด้านบน แล้วกด "อัปเดตตารางตัวแปร" ระบบจะสร้างแถวให้อัตโนมัติ</td>
+                </tr>
+              </tbody>
             </table>
           </div>
-
-          <div class="table-footer">
-            <div id="pd-summary" class="muted">
-              รวม 0 รายการ • สต็อกคงเหลือ 0 ชิ้น
-            </div>
+        </div>
+        <footer>
+          <button type="button" class="btn" id="btnCancelAddProduct">ยกเลิก</button>
+          <button type="submit" class="btn success" id="btnSubmitAddProduct">บันทึกสินค้า</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+  <!-- Edit Product Modal -->
+  <div id="editProductModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editProductTitle">
+      <header>
+        <h4 id="editProductTitle">แก้ไขสินค้า</h4>
+        <button class="close" id="btnCloseEditProduct" title="ปิด">×</button>
+      </header>
+      <form id="editProductForm" class="form">
+        <div class="grid-2">
+          <div>
+            <label>รหัสรุ่นสินค้า (product_id)</label>
+            <input id="ep_product_id" class="input" readonly>
+          </div>
+          <div>
+            <label>SKU ตัวแปร (sku_variant)</label>
+            <input id="ep_sku_variant" class="input" required>
+          </div>
+          <div>
+            <label>ชื่อสินค้า</label>
+            <input id="ep_name" class="input" required>
+          </div>
+          <div>
+            <label>ทุนต่อชิ้น (cost_price)</label>
+            <input id="ep_cost" type="number" step="0.01" class="input" required>
+          </div>
+          <div>
+            <label>ราคาขาย (selling_price)</label>
+            <input id="ep_price" type="number" step="0.01" class="input" required>
+          </div>
+          <div>
+            <label>คงเหลือ (quantity_on_hand)</label>
+            <input id="ep_qty" type="number" class="input" required>
+          </div>
+          <div>
+            <label>สี (Color)</label>
+            <input id="ep_color" class="input" list="colorList">
+          </div>
+          <div>
+            <label>ไซส์ (Size)</label>
+            <select id="ep_size" class="select">
+              <option value="">เลือกไซส์</option>
+              <option>XS</option><option>S</option><option>M</option><option>L</option>
+              <option>XL</option><option>XXL</option><option>XXXL</option>
+            </select>
+          </div>
+          <div>
+            <label>สไตล์ (Style)</label>
+            <input id="ep_style" class="input">
+          </div>
+          <div>
+            <label>Reorder Point</label>
+            <input id="ep_reorder" type="number" class="input">
           </div>
         </div>
-
-        <!-- Modal: Add / Edit Product -->
-        <div
-          id="pd-modal"
-          class="modal-overlay hidden"
-          aria-hidden="true"
-        >
-          <div
-            class="modal-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="pd-modal-title"
-          >
-            <header class="modal-header">
-              <h3 id="pd-modal-title">เพิ่มสินค้า</h3>
-              <button
-                class="icon-btn"
-                id="pd-modal-close"
-                aria-label="ปิด"
-              >
-                ✕
-              </button>
-            </header>
-
-            <div class="modal-body">
-              <!-- Block 1: Product info -->
-              <section class="modal-section">
-                <header class="modal-section-header">
-                  <div class="modal-section-title">ข้อมูลหลักสินค้า</div>
-                  <div class="modal-section-sub">
-                    ตั้งชื่อสินค้า, SKU, หมวดหมู่ และหมายเหตุ
-                  </div>
-                </header>
-
-                <div class="modal-section-body">
-                  <div class="form-grid">
-                    <label class="full">
-                      ชื่อสินค้า
-                      <input id="pd-name" class="input" />
-                    </label>
-
-                    <label>
-                      SKU หลัก
-                      <input id="pd-sku" class="input" />
-                    </label>
-
-                    <label>
-                      บาร์โค้ด
-                      <input id="pd-barcode" class="input" />
-                    </label>
-
-                    <label>
-                      หมวดหมู่
-                      <input
-                        id="pd-category"
-                        class="input"
-                        placeholder="เช่น เสื้อยืด, แก้วน้ำ"
-                      />
-                    </label>
-
-                    <label class="full">
-                      หมายเหตุ
-                      <textarea
-                        id="pd-note"
-                        class="input"
-                        rows="2"
-                      ></textarea>
-                    </label>
-                  </div>
-                </div>
-              </section>
-
-              <!-- Block 2: Variant config -->
-              <section class="modal-section">
-                <header class="modal-section-header">
-                  <div class="modal-section-title">ตัวเลือกสินค้า</div>
-                  <div class="modal-section-sub">
-                    กำหนดสี / ลาย และไซซ์ เพื่อสร้างตัวแปรสินค้าอัตโนมัติ
-                  </div>
-                </header>
-
-                <div class="modal-section-body">
-                  <p class="muted small">
-                    ระบบรองรับ 2 ชั้นของตัวเลือก เช่น ชั้นที่ 1 = สี หรือ
-                    ลายเสื้อ, ชั้นที่ 2 = ไซซ์
-                  </p>
-
-                  <div class="variant-config">
-                    <div class="variant-row">
-                      <label>
-                        ชื่อคุณลักษณะชั้นที่ 1
-                        <input
-                          id="pd-attr1-name"
-                          class="input"
-                          value="สี"
-                        />
-                      </label>
-
-                      <label>
-                        ค่า (คั่นด้วย ,)
-                        <input
-                          id="pd-attr1-values"
-                          class="input"
-                          placeholder="เช่น แดง, น้ำเงิน, เขียว"
-                        />
-                      </label>
-                    </div>
-
-                    <div class="variant-row">
-                      <label>
-                        ชื่อคุณลักษณะชั้นที่ 2
-                        <input
-                          id="pd-attr2-name"
-                          class="input"
-                          value="ไซซ์"
-                        />
-                      </label>
-
-                      <label>
-                        ค่า (คั่นด้วย ,)
-                        <input
-                          id="pd-attr2-values"
-                          class="input"
-                          placeholder="เช่น S, M, L, XL"
-                        />
-                      </label>
-                    </div>
-
-                    <div class="variant-actions">
-                      <button
-                        id="pd-generate-variants"
-                        class="btn ghost"
-                      >
-                        สร้างตัวแปรสินค้า
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <!-- Block 3: Variant table -->
-              <section class="modal-section">
-                <header class="modal-section-header">
-                  <div class="modal-section-title">ตัวแปรสินค้า</div>
-                  <div class="modal-section-sub">
-                    ตั้งราคา, สต็อก และบาร์โค้ดของแต่ละตัวเลือก
-                  </div>
-                </header>
-
-                <div class="modal-section-body">
-                  <div
-                    class="muted small"
-                    style="margin-bottom: 0.5rem;"
-                  >
-                    ตัวแปรทั้งหมด:
-                    <span id="pd-variant-count">0</span> แบบ
-                  </div>
-
-                  <div class="card variant-table-wrapper">
-                    <div class="table-wrapper">
-                      <table
-                        class="table small"
-                        id="pd-variant-table"
-                      >
-                        <thead>
-                          <tr>
-                            <th>ตัวเลือก 1</th>
-                            <th>ตัวเลือก 2</th>
-                            <th>SKU</th>
-                            <th>ราคา (฿)</th>
-                            <th>สต็อกเริ่มต้น</th>
-                            <th>บาร์โค้ด</th>
-                          </tr>
-                        </thead>
-                        <tbody id="pd-variant-tbody"></tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </section>
+        <footer>
+          <button type="button" class="btn" id="btnCancelEditProduct">ยกเลิก</button>
+          <button type="submit" class="btn success" id="btnSubmitEditProduct">บันทึกการแก้ไข</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+            <button id="btnBulkDeleteProducts" class="btn danger" style="display:none">ลบที่เลือก</button>
+            <button class="btn">อิมพอร์ต CSV</button>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="products_select_all"></th>
+                <th>SKU</th>
+                <th>ชื่อสินค้า</th>
+                <th>สี/ไซส์</th>
+                <th>คงเหลือ</th>
+                <th>ทุน/ชิ้น</th>
+                <th>ราคาขาย</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="productsAllBody">
+              <tr><td colspan="8">กำลังโหลดข้อมูล...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="view-products-in" class="view hidden">
+        <div class="card">
+          <div class="panel-title">รับเข้าสต็อก</div>
+          <form class="form grid-2">
+            <div>
+              <label>เลือกสินค้า/ตัวแปร</label>
+              <!-- เปลี่ยนจาก input + datalist เป็น dropdown select จริง ๆ -->
+              <select id="in-product-select" class="select">
+                <option value="">เลือกสินค้า/ตัวแปร</option>
+              </select>
+              <div id="stock_in_info" class="muted" style="margin-top:4px; font-size:12px;">คงเหลือปัจจุบัน: —</div>
             </div>
+            <div>
+              <label>จำนวนรับเข้า</label>
+              <input type="number" class="input" placeholder="เช่น 100">
+            </div>
+            <div>
+              <label>ต้นทุนต่อหน่วย (ถ้ามี)</label>
+              <input type="number" class="input" placeholder="เช่น 120">
+            </div>
+            <div>
+              <label>หมายเหตุ</label>
+              <input class="input" placeholder="ล็อต / อินวอยซ์ ฯลฯ">
+            </div>
+            <div><button class="btn success">บันทึกรับเข้า</button></div>
+          </form>
+        </div>
+      </section>
+      <section id="view-products-adjust" class="view hidden">
+        <div class="card">
+          <div class="panel-title">ปรับสต็อก</div>
+          <form class="form grid-2">
+            <div>
+              <label>สินค้า/ตัวแปร</label>
+              <input class="input" placeholder="พิมพ์หา SKU หรือชื่อ">
+            </div>
+            <div>
+              <label>จำนวน (+ เพิ่ม / - ลด)</label>
+              <input type="number" class="input" placeholder="เช่น -1">
+            </div>
+            <div>
+              <label>เหตุผล</label>
+              <select class="select"><option>เลือกเหตุผล</option><option>Damaged</option><option>Lost</option><option>Manual Adjust</option></select>
+            </div>
+            <div>
+              <label>หมายเหตุ</label>
+              <input class="input" placeholder="รายละเอียดเพิ่มเติม">
+            </div>
+            <div><button class="btn warn">บันทึกการปรับสต็อก</button></div>
+          </form>
+        </div>
+      </section>
+      <section id="view-products-low" class="view hidden">
+        <div class="card">
+          <div class="panel-title">แจ้งเตือนสต็อกต่ำ</div>
+          <table class="table">
+            <thead><tr><th>SKU</th><th>สินค้า</th><th>คงเหลือ</th><th>Reorder Point</th><th>แนะนำรับเข้า</th></tr></thead>
+            <tbody><tr><td>—</td><td>—</td><td>0</td><td>10</td><td>สั่งเพิ่ม 10+</td></tr></tbody>
+          </table>
+        </div>
+      </section>
 
-            <footer class="modal-footer">
-              <button
-                class="btn ghost"
-                id="pd-modal-cancel"
-              >
-                ยกเลิก
-              </button>
-              <button
-                class="btn primary"
-                id="pd-modal-save"
-              >
-                บันทึกสินค้า
-              </button>
-            </footer>
+      <!-- Customers Pages -->
+      <section id="view-customers-list" class="view hidden">
+        <div class="card">
+          <div class="panel-title">รายชื่อลูกค้า</div>
+          <div class="toolbar">
+            <input id="custSearch" class="input" placeholder="ค้นหาชื่อ / Email / เบอร์" style="min-width:280px">
+            <button id="btnOpenAddCustomer" class="btn primary">+ เพิ่มลูกค้า</button>
+          </div>
+
+          <!-- Add Customer Modal -->
+          <div id="addCustomerModal" class="modal-backdrop" aria-hidden="true">
+            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addCustomerTitle">
+              <header>
+                <h4 id="addCustomerTitle">เพิ่มลูกค้า</h4>
+                <button class="close" id="btnCloseAddCustomer" title="ปิด">×</button>
+              </header>
+              <form id="addCustomerForm" class="form">
+                <div class="grid-3">
+                  <div>
+                    <label>รหัสลูกค้า (ปล่อยว่างให้ระบบสร้าง)</label>
+                    <input id="cu_customer_id" class="input" placeholder="AUTO">
+                  </div>
+                  <div>
+                    <label>ชื่อลูกค้า</label>
+                    <input id="cu_name" class="input" placeholder="ชื่อ-นามสกุล / ชื่อร้าน" required>
+                  </div>
+                  <div>
+                    <label>Email</label>
+                    <input id="cu_email" class="input" type="email" placeholder="name@example.com">
+                  </div>
+                </div>
+
+                <div class="grid-3">
+                  <div>
+                    <label>เบอร์โทร</label>
+                    <input id="cu_phone" class="input" placeholder="08x-xxx-xxxx">
+                  </div>
+                  <div>
+                    <label>ประเทศ</label>
+                    <input id="cu_country" class="input" value="Thailand" placeholder="ประเทศ">
+                  </div>
+                  <div>
+                    <label>รหัสไปรษณีย์</label>
+                    <input id="cu_postcode" class="input" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="10110">
+                  </div>
+                </div>
+
+                <div class="grid-4">
+                  <div>
+                    <label>บ้านเลขที่ / อาคาร-ชั้น / ห้อง</label>
+                    <input id="cu_addr1" class="input" placeholder="99/123 อาคาร ABC ชั้น 5 ห้อง 501">
+                  </div>
+                  <div>
+                    <label>หมู่บ้าน/คอนโด / ซอย / ถนน</label>
+                    <input id="cu_addr2" class="input" placeholder="หมู่บ้าน..., ซอย..., ถนน...">
+                  </div>
+                  <div>
+                    <label>ตำบล/แขวง</label>
+                    <input id="cu_subdistrict" class="input" placeholder="ตำบล/แขวง">
+                  </div>
+                  <div>
+                    <label>อำเภอ/เขต</label>
+                    <input id="cu_district" class="input" placeholder="อำเภอ/เขต">
+                  </div>
+                </div>
+
+                <div class="grid-3">
+                  <div>
+                    <label>จังหวัด</label>
+                    <select id="cu_province" class="select"></select>
+                  </div>
+                  <div style="grid-column: span 2">
+                    <label>หมายเหตุลูกค้า (ถ้ามี)</label>
+                    <input id="cu_note" class="input" placeholder="เช่น ช่องทางที่มา / เงื่อนไขพิเศษ">
+                  </div>
+                </div>
+
+                <footer>
+                  <button type="button" class="btn" id="btnCancelAddCustomer">ยกเลิก</button>
+                  <button type="submit" class="btn success" id="btnSubmitAddCustomer">บันทึกลูกค้า</button>
+                </footer>
+              </form>
+            </div>
+          </div>
+
+          <table class="table">
+            <thead>
+              <tr><th>ชื่อลูกค้า</th><th>Email</th><th>โทร</th><th>ออเดอร์สะสม</th><th>มูลค่ารวม</th><th></th></tr>
+            </thead>
+            <tbody id="customersListBody">
+              <tr><td colspan="6">กำลังโหลดข้อมูล...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="view-customers-vip" class="view hidden">
+        <div class="card">
+          <div class="panel-title">ลูกค้า VIP</div>
+          <p class="muted">ตาราง Top Spenders</p>
+          <table class="table">
+            <thead><tr><th>#</th><th>ลูกค้า</th><th>ยอดซื้อสะสม</th><th>ออเดอร์</th></tr></thead>
+            <tbody><tr><td>1</td><td>—</td><td>฿0.00</td><td>0</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="view-customers-nvrs" class="view hidden">
+        <div class="card">
+          <div class="panel-title">ลูกค้าใหม่ vs เก่า</div>
+          <div class="grid-2">
+            <div>
+              <canvas id="custLine"></canvas>
+            </div>
+            <div>
+              <canvas id="custPie"></canvas>
+            </div>
           </div>
         </div>
       </section>
 
+      <!-- Expenses Pages -->
+      <section id="view-expenses-add" class="view hidden">
+        <div class="card">
+          <div class="panel-title">บันทึกรายจ่าย</div>
+          <form id="expenseForm" class="form grid-3">
+            <div>
+              <label>หมวดหมู่</label>
+              <select id="ex_category" class="select"><option>ค่าโฆษณา</option><option>ค่าแพ็กของ</option><option>ค่าขนส่ง</option><option>ค่าธรรมเนียมแพลตฟอร์ม</option><option>เงินเดือน</option></select>
+            </div>
+            <div>
+              <label>จำนวนเงิน</label>
+              <input id="ex_amount" class="input" type="number" step="0.01" placeholder="เช่น 500">
+            </div>
+            <div>
+              <label>วันที่</label>
+              <input id="ex_date" class="input" type="date">
+            </div>
+            <div class="grid-3" style="grid-template-columns:2fr 1fr 1fr">
+              <div>
+                <label>หมายเหตุ</label>
+                <input id="ex_note" class="input" placeholder="รายละเอียดเพิ่มเติม">
+              </div>
+              <div style="display:flex; align-items:end"><button id="btnSaveExpense" type="submit" class="btn success">บันทึก</button></div>
+              <div style="display:flex; align-items:end"><button id="btnClearExpense" type="button" class="btn">ล้างฟอร์ม</button></div>
+            </div>
+          </form>
+          <div class="toolbar" style="margin-top:16px; gap:10px; display:flex; align-items:center; flex-wrap:wrap">
+            <div style="display:flex; gap:8px; align-items:center">
+              <label style="color:var(--muted); font-size:12px">หมวดหมู่</label>
+              <select id="ex_filter_category" class="select">
+                <option value="">ทั้งหมด</option>
+                <option>ค่าโฆษณา</option>
+                <option>ค่าแพ็กของ</option>
+                <option>ค่าขนส่ง</option>
+                <option>ค่าธรรมเนียมแพลตฟอร์ม</option>
+                <option>เงินเดือน</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center">
+              <label style="color:var(--muted); font-size:12px">ระยะเวลา</label>
+              <select id="ex_filter_period" class="select">
+                <option value="all">ทั้งหมด</option>
+                <option value="week">สัปดาห์นี้</option>
+                <option value="month">เดือนนี้</option>
+                <option value="year">ปีนี้</option>
+                <option value="range">ช่วงวันที่</option>
+              </select>
+              <input id="ex_filter_from" class="input" type="date" style="min-width:160px">
+              <span style="color:var(--muted)">—</span>
+              <input id="ex_filter_to" class="input" type="date" style="min-width:160px">
+              <button id="ex_filter_apply" class="btn">กรอง</button>
+            </div>
+            <div style="margin-left:auto; color:var(--muted); font-size:12.5px">
+              รวม: <strong id="ex_total_amount">฿0</strong> • <span id="ex_total_rows">0 รายการ</span>
+            </div>
+          </div>
+          <table class="table">
+            <thead>
+              <tr><th>วันที่</th><th>หมวดหมู่</th><th style="text-align:right">จำนวนเงิน</th><th>หมายเหตุ</th></tr>
+            </thead>
+            <tbody id="expensesListBody">
+              <tr><td colspan="4">กำลังโหลดข้อมูล...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="view-expenses-share" class="view hidden">
+        <div class="card">
+          <div class="panel-title">สัดส่วนค่าใช้จ่าย</div>
+          <canvas id="expShare"></canvas>
+        </div>
+      </section>
+
+      <!-- Summary Page -->
+      <section id="view-summary" class="view hidden">
+        <div class="grid stats">
+          <div class="card col-4"><h3>รายรับ (Revenue)</h3><div class="metric"><div id="sum_revenue" class="value">฿0.00</div></div></div>
+          <div class="card col-4"><h3>ต้นทุนสินค้า (COGS)</h3><div class="metric"><div id="sum_cogs" class="value">฿0.00</div></div></div>
+          <div class="card col-4"><h3>กำไรขั้นต้น (Gross)</h3><div class="metric"><div id="sum_gross" class="value">฿0.00</div></div></div>
+          <div class="card col-6"><h3>ค่าใช้จ่ายดำเนินงาน (OPEX)</h3><div class="metric"><div id="sum_opex" class="value">฿0.00</div></div></div>
+          <div class="card col-6"><h3>กำไรสุทธิ (Net Profit)</h3><div class="metric"><div id="sum_net" class="value">฿0.00</div></div></div>
+        </div>
+        <div class="grid" style="margin-top:18px; grid-template-columns: repeat(12, 1fr); gap:18px">
+          <div class="card col-6"><div class="panel-title">กำไรตามสินค้า (Top Profit)</div><canvas id="profitBySku"></canvas></div>
+          <div class="card col-6"><div class="panel-title">แนวโน้มกำไรสุทธิ</div><canvas id="netTrend"></canvas></div>
+        </div>
+      </section>
+          
+      <!-- Settings Page -->
       <section id="view-settings" class="view hidden">
         <div class="card">
-          <div class="panel-title">ตั้งค่าการเชื่อมต่อ</div>
-          <div class="form-grid">
-            <label>
-              โหมด Backend
-              <select id="backendMode" class="input">
-                <option value="apps-script">Google Apps Script</option>
-              </select>
-            </label>
-            <label>
-              Spreadsheet ID
-              <input id="spreadsheetId" class="input" placeholder="เช่น 1AbCdEf..." />
-            </label>
-            <label>
-              Apps Script URL
-              <input id="appsScriptUrl" class="input" placeholder="https://script.google.com/macros/s/..." />
-            </label>
-            <label>
-              API Key (ถ้ามี)
-              <input id="apiKey" class="input" placeholder="ใส่ถ้ามี" />
-            </label>
-            <label>
-              API Token
-              <input id="apiToken" class="input" placeholder="โทเคนสำหรับตรวจสอบสิทธิ์" />
-            </label>
-            <label class="full">
-              Sheet Map (JSON)
-              <textarea id="sheetMap" class="input" rows="4" placeholder='{"Orders":"Orders","Customers":"Customers"}'></textarea>
-            </label>
-            <label class="full">
-              หมายเหตุ
-              <textarea id="settingsNote" class="input" rows="2" placeholder="โน้ตการตั้งค่าเพิ่มเติม"></textarea>
-            </label>
+          <div class="panel-title">ตั้งค่าระบบ</div>
+          <p class="muted">หน้านี้กำหนดการเชื่อมต่อภายนอก และสิทธิ์การเข้าถึงภายในระบบ โดยเก็บค่าไว้ในชีต <em>Settings</em> (หรือไฟล์ config) เพื่อโยกย้ายฐานข้อมูลได้ง่าย</p>
+        </div>
+
+        <div class="grid" style="grid-template-columns: repeat(12, 1fr); gap:18px">
+          <div class="card col-6">
+            <div class="panel-title">แหล่งข้อมูล (Data Backend)</div>
+            <form class="form grid-2">
+              <div>
+                <label>โหมดการเชื่อมต่อ</label>
+                <select id="backendMode" class="select">
+                  <option value="gsheets_apps_script">Google Sheets — Apps Script (แนะนำ)</option>
+                  <option value="gsheets_api">Google Sheets — API Key/OAuth</option>
+                  <option value="excel">Excel (อัปโหลด/ดาวน์โหลด)</option>
+                </select>
+              </div>
+              <div>
+                <label>Spreadsheet ID</label>
+                <input id="spreadsheetId" class="input" placeholder="1AbCDeFGhI...">
+              </div>
+              <div>
+                <label>Apps Script Web App URL</label>
+                <input id="appsScriptUrl" class="input" placeholder="https://script.google.com/macros/s/.../exec">
+              </div>
+              <div>
+                <label>Google API Key (ถ้าใช้ API ตรง)</label>
+                <input id="apiKey" class="input" placeholder="AIza...">
+              </div>
+              <div>
+                <label>Token (ต้องตรงกับชีต Settings)</label>
+                <input id="apiToken" class="input" placeholder="CHANGE_ME_DEV">
+              </div>
+              <div class="grid-2" style="grid-column:1/-1">
+                <div>
+                  <label>Mapping ชื่อชีต (JSON)</label>
+                  <textarea id="sheetMap" class="textarea" placeholder='{"Products":"Products","ProductVariants":"ProductVariants","Orders":"Orders", "Order_Items":"Order_Items","Stock_Movements":"Stock_Movements","Customers":"Customers","Expenses":"Expenses","Settings":"Settings"}'></textarea>
+                </div>
+                <div>
+                  <label>หมายเหตุ</label>
+                  <textarea id="settingsNote" class="textarea" placeholder="บันทึกเกี่ยวกับฐานข้อมูล/เวอร์ชัน"></textarea>
+                </div>
+              </div>
+              <div style="grid-column:1/-1; display:flex; gap:10px">
+                <button id="btnSaveSettings" type="button" class="btn success">บันทึกการตั้งค่า</button>
+                <button id="btnTestConn" type="button" class="btn">ทดสอบการเชื่อมต่อ</button>
+              </div>
+            </form>
           </div>
-          <div class="actions">
-            <button id="btnSaveSettings" class="btn primary">บันทึกการตั้งค่า</button>
-            <button id="btnTestConn" class="btn ghost">ทดสอบการเชื่อมต่อ</button>
+
+          <div class="card col-6">
+            <div class="panel-title">ช่องทาง/บริการภายนอก (ถ้ามี)</div>
+            <form class="form grid-2">
+              <div>
+                <label>Shopee App Key</label>
+                <input class="input" placeholder="—">
+              </div>
+              <div>
+                <label>Lazada App Key</label>
+                <input class="input" placeholder="—">
+              </div>
+              <div>
+                <label>ขนส่ง – API URL</label>
+                <input class="input" placeholder="Flash/Kerry/อื่น ๆ">
+              </div>
+              <div>
+                <label>Webhook Secret</label>
+                <input class="input" placeholder="—">
+              </div>
+              <div style="grid-column:1/-1">
+                <label>เปิด/ปิดช่องทาง</label>
+                <div class="toolbar"><button class="btn">Shopee: OFF</button><button class="btn">Lazada: OFF</button><button class="btn">Webhook: OFF</button></div>
+              </div>
+              <div style="grid-column:1/-1"><button class="btn success">บันทึก</button></div>
+            </form>
+          </div>
+
+          <div class="card col-12">
+            <div class="panel-title">สิทธิ์การเข้าถึง (จัดการในระบบเรา)</div>
+            <p class="muted">กำหนด Role และสิทธิ์ per-module โดยไม่พึ่งระบบสิทธิ์ภายนอก</p>
+            <div class="toolbar">
+              <button class="btn primary">+ เพิ่มผู้ใช้</button>
+              <select class="select"><option>แสดงทั้งหมด</option><option>Admin</option><option>Manager</option><option>Staff</option><option>Viewer</option></select>
+            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Email</th><th>ชื่อ</th><th>Role</th>
+                  <th>Inventory (View/Edit)</th>
+                  <th>Orders (View/Edit)</th>
+                  <th>Finance (View/Edit)</th>
+                  <th>Reports (View)</th>
+                  <th>CRM (View/Edit)</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>—</td><td>—</td>
+                  <td>
+                    <select class="select"><option>Admin</option><option>Manager</option><option>Staff</option><option>Viewer</option></select>
+                  </td>
+                  <td>
+                    <label><input type="checkbox"> V</label>
+                    <label><input type="checkbox"> E</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox"> V</label>
+                    <label><input type="checkbox"> E</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox"> V</label>
+                    <label><input type="checkbox"> E</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" checked> V</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox"> V</label>
+                    <label><input type="checkbox"> E</label>
+                  </td>
+                  <td><button class="btn">ลบ</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="toolbar" style="margin-top:12px">
+              <button class="btn success">บันทึกสิทธิ์</button>
+              <button class="btn">รีเซ็ต</button>
+            </div>
           </div>
         </div>
       </section>
@@ -512,16 +1221,2221 @@
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" style="display:none"></div>
+  <!-- Global progress overlay for long-running actions (e.g. saving product) -->
+  <div id="globalProgress" class="modal-backdrop" style="display:none; align-items:center; justify-content:center;">
+    <div class="modal progress-modal" role="dialog" aria-modal="true" aria-labelledby="globalProgressTitle">
+      <header style="margin-bottom:4px;">
+        <h4 id="globalProgressTitle" style="font-size:16px; margin:0; color:#fff;">กำลังบันทึก...</h4>
+      </header>
+      <div style="display:flex; align-items:center; gap:12px; font-size:13px; color:var(--muted); padding-bottom:4px;">
+        <div class="spinner" aria-hidden="true"></div>
+        <span id="globalProgressText">ระบบกำลังบันทึกข้อมูล กรุณาอย่าปิดหน้านี้หรือกดซ้ำ</span>
+      </div>
+    </div>
+  </div>
   <div class="ribbon">เมื่อเทียบกับเดือนก่อนหน้า: ยอดขาย 0.0% • ออเดอร์ 0 ใบ • ต้นทุน 0.0%</div>
 
+
+  <script>
+    // Group Products Table by SKU and setup collapsible variant rows
+    function groupProductsTable() {
+      const tbody = document.getElementById('productsAllBody');
+      if (!tbody) return;
+      // Avoid regrouping if already grouped
+      if (tbody.querySelector('.variant-row')) return;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      if (!rows.length) return;
+      if (rows.length === 1 && rows[0].textContent.includes('กำลังโหลดข้อมูล')) return;
+
+      // Build groups by master SKU (grouping variants like SKU-001-01, SKU-001-02 under SKU-001)
+      const groups = [];
+      const skuMap = new Map();
+      for (const row of rows) {
+        const tds = row.querySelectorAll('td');
+        // ต้องมีอย่างน้อย 6 คอลัมน์ (SKU, ชื่อ, สี/ไซส์, คงเหลือ, ทุน, ราคา, ปุ่ม)
+        if (tds.length < 6) continue;
+
+        // ค่า SKU ที่โชว์ในคอลัมน์แรกของตาราง (อาจเป็น SKU-001-01)
+        const rawSku = (tds[0].textContent || '').trim();
+        if (!rawSku) continue;
+
+        // แปลงให้เป็น master SKU สำหรับใช้รวมกลุ่ม
+        // ตัวอย่าง: SKU-001-01, SKU-001-02 -> masterSku = SKU-001
+        // ถ้าเป็น HDP-006 (ไม่มีตัวเลือกย่อย) ก็จะได้ masterSku = HDP-006 เหมือนเดิม
+        let masterSku = rawSku;
+        const m = rawSku.match(/^([A-Za-z]+\-\d{3})/); // จับ prefix อย่างเช่น SKU-001, HDP-006
+        if (m) {
+          masterSku = m[1];
+        }
+
+        if (!skuMap.has(masterSku)) {
+          const group = { sku: masterSku, rows: [] };
+          skuMap.set(masterSku, group);
+          groups.push(group);
+        }
+        skuMap.get(masterSku).rows.push(row);
+      }
+
+      tbody.innerHTML = '';
+
+      for (const group of groups) {
+        const firstRow = group.rows[0];
+        const tds = firstRow.querySelectorAll('td');
+        const name = tds[1] ? tds[1].textContent.trim() : '';
+        const firstColorSize = tds[2] ? tds[2].textContent.trim() : '';
+        const costText = tds[4] ? tds[4].textContent.trim() : '';
+        const priceText = tds[5] ? tds[5].textContent.trim() : '';
+        const actionHtml = tds[tds.length - 1] ? tds[tds.length - 1].innerHTML : '';
+
+        // totalQty: sum all rows in group, 4th <td>
+        let totalQty = 0;
+        for (const row of group.rows) {
+          const cols = row.querySelectorAll('td');
+          const qtyTd = cols[3];
+          let qty = 0;
+          if (qtyTd) {
+            const n = qtyTd.textContent.replace(/[^\d]/g, '');
+            qty = Number(n) || 0;
+          }
+          totalQty += qty;
+        }
+
+        // summary text
+        const summaryColorSize = firstColorSize; // ใช้กับกรณีมีตัวเลือกเดียว
+        // สำหรับ master row (มีหลายตัวเลือก) ให้โชว์แค่จำนวนตัวเลือก เช่น "10 ตัวเลือก"
+        const summaryMaster = group.rows.length > 1
+          ? `${group.rows.length} ตัวเลือก`
+          : summaryColorSize;
+
+        // ถ้ามีแค่ 1 แถว (1 SKU / 1 ตัวเลือก) ให้แสดงเป็นแถวธรรมดาเลย และมี checkbox เลือกได้
+        if (group.rows.length === 1) {
+          const singleTr = document.createElement('tr');
+          singleTr.className = 'product-master-row';
+          singleTr.dataset.sku = group.sku;
+          singleTr.innerHTML =
+            `<td><input type="checkbox" class="product-select" data-sku="${group.sku}"></td>` +
+            `<td>${group.sku}</td>` +
+            `<td>${name}</td>` +
+            `<td>${summaryColorSize}</td>` +
+            `<td>${totalQty}</td>` +
+            `<td>${costText}</td>` +
+            `<td>${priceText}</td>` +
+            `<td>${actionHtml}</td>`;
+          tbody.appendChild(singleTr);
+          continue;
+        }
+
+        // Master row (มีปุ่มแสดง/ซ่อนตัวเลือก เฉพาะกรณีที่มีมากกว่า 1 ตัวเลือก)
+        const masterTr = document.createElement('tr');
+        masterTr.className = 'product-master-row';
+        masterTr.dataset.sku = group.sku;
+        masterTr.innerHTML =
+          `<td><input type="checkbox" class="product-select" data-sku="${group.sku}"></td>` +
+          `<td>${group.sku}</td>` +
+          `<td>${name}</td>` +
+          `<td>${summaryMaster}</td>` +
+          `<td>…</td>` +
+          `<td>…</td>` +
+          `<td>…</td>` +
+          `<td><button type="button" class="btn" data-toggle-variants="${group.sku}">แสดงตัวเลือก (${group.rows.length})</button></td>`;
+        tbody.appendChild(masterTr);
+
+        // Variant rows
+        for (const row of group.rows) {
+          const cols = row.querySelectorAll('td');
+          const skuHtml = cols[0] ? cols[0].innerHTML : '';
+          const nameHtml = cols[1] ? cols[1].innerHTML : '';
+          const colorHtml = cols[2] ? cols[2].innerHTML : '';
+          const qtyHtml = cols[3] ? cols[3].innerHTML : '';
+          const costHtml = cols[4] ? cols[4].innerHTML : '';
+          const priceHtml = cols[5] ? cols[5].innerHTML : '';
+          const actionInnerHtml = cols[cols.length - 1] ? cols[cols.length - 1].innerHTML : '';
+
+          const child = document.createElement('tr');
+          child.className = 'variant-row hidden';
+          child.dataset.parentSku = group.sku;
+          child.innerHTML =
+            `<td><input type="checkbox" class="product-select" data-sku="${group.sku}"></td>` +
+            `<td>${skuHtml}</td>` +
+            `<td>${nameHtml}</td>` +
+            `<td>&nbsp;&nbsp;↳ ${colorHtml}</td>` +
+            `<td>${qtyHtml}</td>` +
+            `<td>${costHtml}</td>` +
+            `<td>${priceHtml}</td>` +
+            `<td>${actionInnerHtml}</td>`;
+          tbody.appendChild(child);
+        }
+      }
+
+      // Attach toggle handlers
+      const buttons = tbody.querySelectorAll('button[data-toggle-variants]');
+      buttons.forEach(btn => {
+        btn.addEventListener('click', function () {
+          const sku = btn.getAttribute('data-toggle-variants');
+          const variants = tbody.querySelectorAll(`tr.variant-row[data-parent-sku="${sku}"]`);
+          const anyShown = Array.from(variants).some(tr => !tr.classList.contains('hidden'));
+          variants.forEach(tr => tr.classList.toggle('hidden', anyShown));
+          btn.textContent = (anyShown ? 'แสดงตัวเลือก' : 'ซ่อนตัวเลือก') + ` (${variants.length})`;
+        });
+      });
+    }
+    window.addEventListener('load', function () {
+      const tbody = document.getElementById('productsAllBody');
+      if (!tbody) return;
+      // จัดกลุ่มตารางครั้งแรก (กรณีโหลดข้อมูลมาแล้ว)
+      groupProductsTable();
+      if (window.hdBuildStockInSkuListFromTable) {
+        window.hdBuildStockInSkuListFromTable();
+      }
+      const observer = new MutationObserver(function () {
+        groupProductsTable();
+        if (window.hdBuildStockInSkuListFromTable) {
+          window.hdBuildStockInSkuListFromTable();
+        }
+      });
+      observer.observe(tbody, { childList: true });
+    });
+  </script>
+  <script>
+    // ===== Stock In: dropdown SKU + โหลดข้อมูลจาก Google Sheets (Master SKU) =====
+    (function(){
+      // fallback constants for endpoint/token
+      const STATIC_HUG_GAS_BASE_URL = typeof HUG_GAS_BASE_URL !== 'undefined'
+        ? HUG_GAS_BASE_URL
+        : 'https://script.google.com/macros/s/AKfycby_lPNATr25RsNEGeRhbLFRiBkFWTU2DngA3amjBAjTvMXhCSdlt_5mICQNwjJUim-DyA/exec';
+      const STATIC_HUG_GAS_TOKEN = typeof HUG_GAS_TOKEN !== 'undefined'
+        ? HUG_GAS_TOKEN
+        : 'CHANGE_ME_DEV';
+
+      // cache สินค้าแบบ Master (1 แถว = 1 Listing หลัก)
+      // รูปแบบคร่าว ๆ ที่ Apps Script ควรส่งมา:
+      // {
+      //   "items":[
+      //     {
+      //       "master_sku":"HDP-006",
+      //       "name":"เสื้อคอกลมสีพื้น II",
+      //       "total_stock":87,
+      //       "variant_count":10,
+      //       "variants":[
+      //         {"sku":"HDP-006-WH-S","opt1":"ขาว","opt2":"S","qty":10},
+      //         {"sku":"HDP-006-WH-M","opt1":"ขาว","opt2":"M","qty":12}
+      //       ]
+      //     }
+      //   ]
+      // }
+      let masterProducts = [];
+      window.hdMasterProducts = masterProducts; // เผื่ออนาคต script อื่นอยากใช้
+
+      async function hdFetchMasterProductsFromSheet(){
+        try {
+          const urlEl   = document.getElementById('appsScriptUrl');
+          const tokenEl = document.getElementById('apiToken');
+
+          // ใช้ค่าจากหน้า Settings ก่อน ถ้าเว้นว่างให้ fallback ไปใช้ค่าคงที่ด้านบน
+          let url   = urlEl && urlEl.value ? urlEl.value.trim() : '';
+          let token = tokenEl && tokenEl.value ? tokenEl.value.trim() : '';
+
+          if (!url && STATIC_HUG_GAS_BASE_URL) {
+            url = STATIC_HUG_GAS_BASE_URL;
+          }
+          if (!token && STATIC_HUG_GAS_TOKEN) {
+            token = STATIC_HUG_GAS_TOKEN;
+          }
+
+          if (!url) {
+            console.warn('ยังไม่ได้ตั้งค่า Apps Script URL และไม่มีค่า fallback');
+            return null;
+          }
+
+          const params = new URLSearchParams({
+            action: 'listMasterProducts', // ให้ไป implement action นี้ใน Apps Script
+            token: token || ''
+          });
+
+          // ถ้า URL มีเครื่องหมาย ? อยู่แล้ว (เช่น แบบ test deployment ของ Apps Script)
+          // ให้ใช้ & ต่อ query string แทน ไม่งั้นจะกลายเป็น ?? และ token จะไม่ถูกส่งถูกต้อง
+          const sep = url.includes('?') ? '&' : '?';
+          const reqUrl = url + sep + params.toString();
+
+          const res = await fetch(reqUrl, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+          });
+
+          if (!res.ok) {
+            console.warn('โหลด Master Products จาก Apps Script ไม่สำเร็จ:', res.status, res.statusText);
+            return null;
+          }
+
+          const data = await res.json().catch(() => null);
+          if (!data || !Array.isArray(data.items)) {
+            console.warn('โครงสร้าง JSON จาก Apps Script ไม่ตรงที่คาดไว้ (ต้องมี field items[])');
+            return null;
+          }
+
+          masterProducts = data.items.map(item => ({
+            master_sku: item.master_sku || item.masterSku || '',
+            name:       item.name || '',
+            total_stock: Number(item.total_stock ?? item.totalStock ?? 0) || 0,
+            variant_count: Array.isArray(item.variants)
+              ? item.variants.length
+              : (item.variant_count || item.variantCount || 0 || 0),
+            variants:   Array.isArray(item.variants) ? item.variants : []
+          })).filter(p => p.master_sku);
+
+          window.hdMasterProducts = masterProducts;
+          return masterProducts;
+        } catch (err) {
+          console.warn('hdFetchMasterProductsFromSheet error:', err);
+          return null;
+        }
+      }
+
+      // สร้าง dropdown จาก masterProducts
+      function buildStockInDropdownFromMaster(){
+        const select = document.getElementById('in-product-select');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">เลือกสินค้า/ตัวแปร</option>';
+
+        if (!masterProducts || !masterProducts.length) {
+          const opt = document.createElement('option');
+          opt.disabled = true;
+          opt.textContent = 'ไม่พบข้อมูลสินค้า (ตรวจสอบการตั้งค่า Apps Script หรือลองรีเฟรชหน้า)';
+          select.appendChild(opt);
+          return;
+        }
+
+        masterProducts.forEach(p => {
+          const countText = p.variant_count
+            ? ` (${p.variant_count} ตัวเลือก)`
+            : '';
+          const opt = document.createElement('option');
+          opt.value = p.master_sku;
+          opt.textContent = `${p.master_sku} – ${p.name}${countText}`;
+          select.appendChild(opt);
+        });
+      }
+
+      // อัปเดตข้อความคงเหลือปัจจุบัน
+      function hdUpdateStockInInfoFromMaster(){
+        const select = document.getElementById('in-product-select');
+        const info   = document.getElementById('stock_in_info');
+        if (!select || !info) return;
+
+        const sku = select.value.trim();
+        if (!sku) {
+          info.textContent = 'คงเหลือปัจจุบัน: —';
+          return;
+        }
+
+        const item = masterProducts.find(p => p.master_sku === sku);
+        if (!item) {
+          info.textContent = 'ไม่พบข้อมูลในระบบ (อาจยังไม่ได้บันทึกสินค้า หรือโหลดไม่สำเร็จ)';
+          return;
+        }
+
+        const total = item.total_stock ?? 0;
+        const variantCount = item.variant_count ?? (item.variants ? item.variants.length : 0);
+
+        info.textContent = `คงเหลือปัจจุบัน: ${total} ชิ้น • ตัวเลือก: ${variantCount} แบบ`;
+      }
+
+      // ฟังก์ชันนี้คงชื่อเดิมไว้ เพื่อไม่ให้ script ส่วนอื่นพัง
+      // ตอนนี้ให้ทำหน้าที่ "รีบิวด์ dropdown จาก masterProducts"
+      function hdBuildStockInSkuListFromTable(){
+        buildStockInDropdownFromMaster();
+      }
+      window.hdBuildStockInSkuListFromTable = hdBuildStockInSkuListFromTable;
+
+      async function initStockInFromBackend(){
+        // 1) ลองโหลดข้อมูลจาก Google Sheets ผ่าน Apps Script ก่อน
+        const loaded = await hdFetchMasterProductsFromSheet();
+
+        if (loaded && loaded.length) {
+          buildStockInDropdownFromMaster();
+          hdUpdateStockInInfoFromMaster();
+        } else {
+          // 2) ถ้าโหลดไม่ได้จริง ๆ ให้ fallback ใช้วิธีอ่านจากตารางเดิม (ถ้ายังมี)
+          console.warn('ใช้ fallback: hdBuildStockInSkuListFromTable (จากตาราง)');
+          if (typeof window.hdBuildStockInSkuListFromTable === 'function') {
+            window.hdBuildStockInSkuListFromTable();
+          }
+        }
+
+        const select = document.getElementById('in-product-select');
+        if (select) {
+          select.addEventListener('change', hdUpdateStockInInfoFromMaster);
+        }
+      }
+
+      window.addEventListener('load', initStockInFromBackend);
+    })();
+  </script>
+
+  <script>
+    // Bulk select checkboxes onสินค้าทั้งหมด + แสดงปุ่มลบแบบกลุ่ม
+    window.addEventListener('load', function () {
+      const selectAll = document.getElementById('products_select_all');
+      const tbody = document.getElementById('productsAllBody');
+      const bulkDeleteBtn = document.getElementById('btnBulkDeleteProducts');
+      if (!selectAll || !tbody) return;
+
+      function updateBulkDeleteVisibility() {
+        if (!bulkDeleteBtn) return;
+        const anyChecked = tbody.querySelector('input.product-select[type="checkbox"]:checked');
+        bulkDeleteBtn.style.display = anyChecked ? 'inline-flex' : 'none';
+      }
+
+      selectAll.addEventListener('change', function () {
+        const checked = selectAll.checked;
+        tbody.querySelectorAll('input.product-select[type="checkbox"]').forEach(cb => {
+          cb.checked = checked;
+        });
+        updateBulkDeleteVisibility();
+      });
+
+      // ใช้ event delegation ให้ครอบคลุม checkbox ที่สร้างขึ้นภายหลัง
+      tbody.addEventListener('change', function (e) {
+        if (e.target && e.target.matches('input.product-select[type="checkbox"]')) {
+          updateBulkDeleteVisibility();
+        }
+      });
+
+      // ลบสินค้าที่เลือกแบบกลุ่ม (ใช้ปุ่มลบของแต่ละแถว เพื่อให้ไปตาม flow เดิม)
+      if (bulkDeleteBtn) {
+        bulkDeleteBtn.addEventListener('click', function () {
+          const checked = tbody.querySelectorAll('input.product-select[type="checkbox"]:checked');
+          if (!checked.length) {
+            alert('กรุณาเลือกรายการสินค้าที่ต้องการลบ');
+            return;
+          }
+          const confirmMsg = checked.length === 1
+            ? 'ต้องการลบสินค้า 1 รายการหรือไม่?'
+            : `ต้องการลบสินค้า ${checked.length} รายการหรือไม่?`;
+          // แสดง popup ยืนยันแค่ครั้งเดียวที่นี่
+          if (!confirm(confirmMsg)) return;
+
+          // จากนี้ไปให้ลบแต่ละแถวโดยไม่ต้องเด้ง popup ซ้ำ
+          const originalConfirm = window.confirm;
+          window.confirm = function () { return true; };
+
+          try {
+            checked.forEach(cb => {
+              const row = cb.closest('tr');
+              if (!row) return;
+              // หาปุ่ม "ลบ" ของแถวนี้ (ปุ่มแดง)
+              const deleteBtn = row.querySelector('button.btn.danger') || row.querySelector('button[data-delete-product]');
+              if (deleteBtn) {
+                deleteBtn.click(); // ใช้ handler เดิม แต่บังคับให้ confirm() ตอบตกลงอัตโนมัติ
+              } else {
+                // ถ้าไม่มี handler เดิม ให้ลบออกจากหน้าจออย่างน้อย
+                row.remove();
+              }
+            });
+          } finally {
+            // คืนค่า confirm กลับเป็นปกติหลังลบเสร็จ
+            window.confirm = originalConfirm;
+          }
+
+          // เคลียร์ checkbox และซ่อนปุ่มลบแบบกลุ่ม
+          if (selectAll) selectAll.checked = false;
+          updateBulkDeleteVisibility();
+        });
+      }
+    });
+  </script>
+
+  <script>
+    // ===== Global progress + ป้องกันการกดบันทึกซ้ำ (Add Product) =====
+    (function(){
+      let isSavingProduct = false;
+
+      function showGlobalProgress(message){
+        const overlay = document.getElementById('globalProgress');
+        const textEl  = document.getElementById('globalProgressText');
+        const titleEl = document.getElementById('globalProgressTitle');
+        if(!overlay) return;
+        if(textEl && message) textEl.textContent = message;
+        if(titleEl && message && message.trim() !== '') titleEl.textContent = 'กำลังบันทึก...';
+        overlay.style.display = 'flex';
+      }
+
+      function hideGlobalProgress(){
+        const overlay = document.getElementById('globalProgress');
+        if(overlay) overlay.style.display = 'none';
+      }
+
+      // Expose helper เผื่อสคริปต์อื่นอยากเรียกใช้
+      window.hdShowProgress = showGlobalProgress;
+      window.hdHideProgress = hideGlobalProgress;
+
+      window.addEventListener('load', function(){
+        const addForm   = document.getElementById('addProductForm');
+        const submitBtn = document.getElementById('btnSubmitAddProduct');
+        if(addForm && submitBtn){
+          // ใช้ capture = true เพื่อให้เช็คก่อน handler เดิม
+          addForm.addEventListener('submit', function(e){
+            // --------- Duplicate Master SKU Check (before isSavingProduct) ---------
+            const skuInput = document.getElementById('ap_sku_variant');
+            const skuVal = skuInput ? skuInput.value.trim() : '';
+            if (skuVal) {
+              const tbody = document.getElementById('productsAllBody');
+              if (tbody) {
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                let found = false;
+                for (const row of rows) {
+                  const tds = row.querySelectorAll('td');
+                  if (tds.length >= 2) {
+                    const cellVal = (tds[1].textContent || '').trim();
+                    if (cellVal === skuVal) {
+                      found = true;
+                      break;
+                    }
+                  }
+                }
+                if (found) {
+                  e.preventDefault();
+                  alert('มี SKU หลักนี้อยู่แล้วในระบบ กรุณาใช้รหัสอื่น');
+                  return;
+                }
+              }
+            }
+            // --------- End Duplicate Master SKU Check ---------
+
+            if(isSavingProduct){
+              e.preventDefault();
+              return;
+            }
+            isSavingProduct = true;
+            submitBtn.disabled = true;
+            if(!submitBtn.dataset.originalText){
+              submitBtn.dataset.originalText = submitBtn.textContent || 'บันทึกสินค้า';
+            }
+            submitBtn.textContent = 'กำลังบันทึก...';
+            showGlobalProgress('ระบบกำลังบันทึกสินค้า กรุณาอย่ากดปุ่มซ้ำ');
+          }, true);
+        }
+
+        function wrapShowToast(){
+          const original = window.showToast;
+          if(typeof original !== 'function') return false;
+          if(original.__hdWrapped) return true;
+          function wrapped(msg, type){
+            hideGlobalProgress();
+            isSavingProduct = false;
+            const submitBtn2 = document.getElementById('btnSubmitAddProduct');
+            if(submitBtn2){
+              submitBtn2.disabled = false;
+              submitBtn2.textContent = submitBtn2.dataset.originalText || 'บันทึกสินค้า';
+            }
+            return original(msg, type);
+          }
+          wrapped.__hdWrapped = true;
+          window.showToast = wrapped;
+          return true;
+        }
+
+        if(!wrapShowToast()){
+          let tries = 0;
+          const t = setInterval(function(){
+            tries++;
+            if(wrapShowToast() || tries > 20){
+              clearInterval(t);
+            }
+          }, 200);
+        }
+      });
+
+      window.hdResetProductSavingState = function(){
+        isSavingProduct = false;
+        hideGlobalProgress();
+        const submitBtn = document.getElementById('btnSubmitAddProduct');
+        if(submitBtn){
+          submitBtn.disabled = false;
+          submitBtn.textContent = submitBtn.dataset.originalText || 'บันทึกสินค้า';
+        }
+      };
+    })();
+  </script>
+
+  <script>
+    // ===== Suggest next master SKU and auto-fill when opening Add Product modal =====
+    (function(){
+      // --- helper: call Apps Script to get next SKU from Google Sheets ---
+      async function hdFetchNextSkuFromSheet(){
+        try {
+          const urlEl   = document.getElementById('appsScriptUrl');
+          const tokenEl = document.getElementById('apiToken');
+          const url     = urlEl && urlEl.value ? urlEl.value.trim() : '';
+          const token   = tokenEl && tokenEl.value ? tokenEl.value.trim() : '';
+
+          if (!url) return null; // ยังไม่ตั้งค่า Web App URL ให้ใช้วิธีเดิม
+
+          const params = new URLSearchParams({
+            action: 'nextSkuVariant',
+            token: token || ''
+          });
+
+          const sep = url.includes('?') ? '&' : '?';
+          const reqUrl = url + sep + params.toString();
+
+          const res = await fetch(reqUrl, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+          });
+
+          if (!res.ok) return null;
+          const data = await res.json().catch(() => null);
+          if (data && (data.nextSku || data.next_sku)) {
+            return data.nextSku || data.next_sku;
+          }
+          return null;
+        } catch (err) {
+          console.warn('hdFetchNextSkuFromSheet error:', err);
+          return null;
+        }
+      }
+
+      // --- เดิม: เดาจากตารางสินค้าในหน้า (ใช้เป็น fallback) ---
+      function hdSuggestNextSkuFromTable(){
+        const input = document.getElementById('ap_sku_variant');
+        if (!input) return;
+        if (input.value && input.value.trim() !== '') return; // อย่าทับค่าที่ผู้ใช้กรอกเอง
+
+        const tbody = document.getElementById('productsAllBody');
+        if (!tbody) return;
+
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        let prefix = null;
+        let maxNum = 0;
+
+        for (const row of rows) {
+          const tds = row.querySelectorAll('td');
+          if (tds.length >= 2) {
+            const sku = (tds[1].textContent || '').trim();
+            if (!sku) continue;
+            const m = sku.match(/^([A-Za-z]+)-?(\d+)$/);
+            if (m) {
+              if (!prefix) prefix = m[1];
+              if (m[1] === prefix) {
+                const n = parseInt(m[2], 10);
+                if (!isNaN(n) && n > maxNum) maxNum = n;
+              }
+            }
+          }
+        }
+
+        if (!prefix) prefix = 'SKU';
+        const nextNum = maxNum + 1;
+        const nextSku = prefix + '-' + String(nextNum).padStart(3, '0');
+        input.value = nextSku;
+      }
+
+      // --- main: แนะนำ SKU โดยลองดึงจาก Google Sheet ก่อน แล้วค่อย fallback มาดูจากตาราง ---
+      async function hdSuggestNextMasterSku(){
+        const input = document.getElementById('ap_sku_variant');
+        if (!input) return;
+        if (input.value && input.value.trim() !== '') return; // ถ้ามีค่าแล้วไม่ต้องทำอะไร
+
+        // ลองเรียกจากฐานข้อมูลบน Google Sheets ผ่าน Apps Script ก่อน
+        const fromSheet = await hdFetchNextSkuFromSheet();
+        if (fromSheet && (!input.value || input.value.trim() === '' || input.value === 'AUTO')) {
+          input.value = fromSheet;
+          return;
+        }
+
+        // ถ้าเรียก backend ไม่ได้ หรือไม่ได้ค่า nextSku ให้ใช้วิธีเดิมจากตารางในหน้า
+        hdSuggestNextSkuFromTable();
+      }
+
+      // Export ให้สคริปต์อื่นสามารถเรียกใช้ได้
+      window.hdSuggestNextMasterSku = hdSuggestNextMasterSku;
+
+      window.addEventListener('load', function(){
+        const btn = document.getElementById('btnOpenAddProduct');
+        if (btn) {
+          btn.addEventListener('click', function(){
+            // ให้รันหลัง modal เปิดแล้วเล็กน้อย
+            setTimeout(hdSuggestNextMasterSku, 0);
+          });
+        }
+        // เผื่อกรณี modal เปิดอยู่แล้วตอนโหลดหน้า
+        setTimeout(hdSuggestNextMasterSku, 0);
+      });
+    })();
+  </script>
+  <script>
+    // Safety shim for legacy Add Product script
+    // Some older code still expects inputs like ap_color/ap_size/ap_style.
+    // This creates hidden inputs with those IDs if they are missing,
+    // so calling document.getElementById('...').value will not throw an error.
+    window.addEventListener('load', function(){
+      var form = document.getElementById('addProductForm');
+      if (!form) return;
+      function ensureHiddenInput(id){
+        if (document.getElementById(id)) return;
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.id = id;
+        form.appendChild(input);
+      }
+      ensureHiddenInput('ap_color');
+      ensureHiddenInput('ap_size');
+      ensureHiddenInput('ap_style');
+    });
+  </script>
+
+  <script>
+    // ===== Product Option 2-level (เหมือน Shopee – สร้างตารางตัวแปร) =====
+    function ap_parseOptionValues(raw){
+      if(!raw) return [];
+      return raw.split(',').map(v => v.trim()).filter(Boolean);
+    }
+
+    function ap_buildVariantTable(){
+      const opt1NameEl = document.getElementById('ap_opt1_name');
+      const opt2NameEl = document.getElementById('ap_opt2_name');
+      const opt1ValEl  = document.getElementById('ap_opt1_values');
+      const opt2ValEl  = document.getElementById('ap_opt2_values');
+      const tbody      = document.getElementById('ap_variantTableBody');
+      const head1      = document.getElementById('ap_head_opt1');
+      const head2      = document.getElementById('ap_head_opt2');
+
+      if(!tbody || !opt1ValEl) return;
+
+      const opt1Name = (opt1NameEl && opt1NameEl.value || 'ตัวเลือกที่ 1').trim() || 'ตัวเลือกที่ 1';
+      const opt2Name = (opt2NameEl && opt2NameEl.value || 'ตัวเลือกที่ 2').trim() || 'ตัวเลือกที่ 2';
+      const opt1Vals = ap_parseOptionValues(opt1ValEl.value);
+      const opt2Vals = ap_parseOptionValues(opt2ValEl && opt2ValEl.value || '');
+
+      if(head1) head1.textContent = opt1Name;
+      if(head2) head2.textContent = opt2Vals.length ? opt2Name : 'ตัวเลือกที่ 2';
+
+      if(!opt1Vals.length){
+        tbody.innerHTML = `<tr><td colspan="5" class="muted">กรุณากรอกค่าตัวเลือกที่ 1 อย่างน้อย 1 ค่า</td></tr>`;
+        return;
+      }
+
+      const rows = [];
+      if(opt2Vals.length){
+        opt1Vals.forEach(v1 => {
+          opt2Vals.forEach(v2 => {
+            rows.push(`
+              <tr>
+                <td>${v1}</td>
+                <td>${v2}</td>
+                <td><input class="input" type="number" step="0.01" placeholder="ราคาขาย"></td>
+                <td><input class="input" type="number" placeholder="สต็อกเริ่มต้น"></td>
+                <td><input class="input" placeholder="SKU"></td>
+              </tr>
+            `);
+          });
+        });
+      } else {
+        opt1Vals.forEach(v1 => {
+          rows.push(`
+            <tr>
+              <td>${v1}</td>
+              <td>–</td>
+              <td><input class="input" type="number" step="0.01" placeholder="ราคาขาย"></td>
+              <td><input class="input" type="number" placeholder="สต็อกเริ่มต้น"></td>
+              <td><input class="input" placeholder="SKU"></td>
+            </tr>
+          `);
+        });
+      }
+
+      tbody.innerHTML = rows.join('');
+      // หลังจากสร้างแถวแล้ว ให้เติมเลข SKU ให้อัตโนมัติ (ถ้ายังว่างอยู่)
+      ap_autoFillSkus();
+    }
+
+    function ap_autoFillSkus(){
+      const tbody = document.getElementById('ap_variantTableBody');
+      if(!tbody) return;
+      const prefixEl = document.getElementById('ap_sku_variant');
+      const rawPrefix = prefixEl && prefixEl.value ? prefixEl.value.trim() : '';
+      const base = rawPrefix || 'SKU';
+
+      let counter = 1;
+      tbody.querySelectorAll('tr').forEach(tr => {
+        const skuInput = tr.querySelector('td:nth-child(5) input');
+        if(!skuInput) return;
+        // ถ้ามีค่าที่ผู้ใช้กรอกแล้ว ให้คงค่าเดิมไว้ ไม่ต้องทับ
+        if(skuInput.value && skuInput.value.trim() !== '') return;
+        const suffix = String(counter).padStart(2, '0');
+        skuInput.value = rawPrefix ? `${rawPrefix}-${suffix}` : `${base}-${suffix}`;
+        counter++;
+      });
+    }
+
+    function ap_applyBulkPrice(){
+      const bulkEl = document.getElementById('ap_bulk_price');
+      const tbody  = document.getElementById('ap_variantTableBody');
+      if(!bulkEl || !tbody) return;
+      const val = bulkEl.value;
+      if(val === '') return;
+      tbody.querySelectorAll('tr').forEach(tr=>{
+        const priceInput = tr.querySelector('td:nth-child(3) input');
+        if(priceInput) priceInput.value = val;
+      });
+    }
+
+    function ap_applyBulkStock(){
+      const bulkEl = document.getElementById('ap_bulk_stock');
+      const tbody  = document.getElementById('ap_variantTableBody');
+      if(!bulkEl || !tbody) return;
+      const val = bulkEl.value;
+      if(val === '') return;
+      tbody.querySelectorAll('tr').forEach(tr=>{
+        const stockInput = tr.querySelector('td:nth-child(4) input');
+        if(stockInput) stockInput.value = val;
+      });
+    }
+
+    window.addEventListener('load', () => {
+      const btn = document.getElementById('ap_btnBuildVariants');
+      if(btn && !btn.dataset.bound){
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', ap_buildVariantTable);
+      }
+
+      const bulkPriceBtn = document.getElementById('ap_btnApplyPrice');
+      if(bulkPriceBtn && !bulkPriceBtn.dataset.bound){
+        bulkPriceBtn.dataset.bound = '1';
+        bulkPriceBtn.addEventListener('click', ap_applyBulkPrice);
+      }
+
+      const bulkStockBtn = document.getElementById('ap_btnApplyStock');
+      if(bulkStockBtn && !bulkStockBtn.dataset.bound){
+        bulkStockBtn.dataset.bound = '1';
+        bulkStockBtn.addEventListener('click', ap_applyBulkStock);
+      }
+
+      const autoSkuBtn = document.getElementById('ap_btnAutoSku');
+      if(autoSkuBtn && !autoSkuBtn.dataset.bound){
+        autoSkuBtn.dataset.bound = '1';
+        autoSkuBtn.addEventListener('click', ap_autoFillSkus);
+      }
+    });
+  </script>
+
+  <!-- Chart.js (CDN) for demo visuals; replace with real data later -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="./assets/js/api.js"></script>
-  <script src="./assets/js/settings.js"></script>
-  <script src="./assets/js/router.js"></script>
-  <script src="./assets/js/overview.js"></script>
-  <script src="./assets/js/customers.js"></script>
-  <script src="./assets/js/expenses.js"></script>
-  <script src="./assets/js/products.js"></script>
-  <script src="./assets/js/main.js"></script>
+  <script>
+    // Chart color helper (used by dynamic charts below)
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#e5e7eb';
+  </script>
+  <script>
+    // Simple hash router — no data fetching, only swaps sections
+    const routes = {
+      '#/overview': { view: 'view-overview', title: 'ภาพรวม' },
+      '#/orders/all': { view: 'view-orders-all', title: 'ออเดอร์ทั้งหมด' },
+      '#/orders/pending': { view: 'view-orders-pending', title: 'ออเดอร์รอชำระ' },
+      '#/orders/pack': { view: 'view-orders-pack', title: 'พร้อมแพ็ก' },
+      '#/orders/shipped': { view: 'view-orders-shipped', title: 'ส่งแล้ว' },
+      '#/orders/canceled': { view: 'view-orders-canceled', title: 'ออเดอร์ยกเลิก' },
+      '#/products/all': { view: 'view-products-all', title: 'สินค้าทั้งหมด' },
+      '#/products/in': { view: 'view-products-in', title: 'รับเข้าสต็อก' },
+      '#/products/adjust': { view: 'view-products-adjust', title: 'ปรับสต็อก' },
+      '#/products/low': { view: 'view-products-low', title: 'แจ้งเตือนสต็อกต่ำ' },
+      '#/customers/list': { view: 'view-customers-list', title: 'รายชื่อลูกค้า' },
+      '#/customers/vip': { view: 'view-customers-vip', title: 'ลูกค้า VIP' },
+      '#/customers/nvrs': { view: 'view-customers-nvrs', title: 'ลูกค้าใหม่ vs เก่า' },
+      '#/expenses/add': { view: 'view-expenses-add', title: 'บันทึกรายจ่าย' },
+      '#/expenses/share': { view: 'view-expenses-share', title: 'สัดส่วนค่าใช้จ่าย' },
+      '#/summary': { view: 'view-summary', title: 'สรุปยอด' },
+      '#/settings': { view: 'view-settings', title: 'ตั้งค่า' },
+    };
+
+    const views = document.querySelectorAll('.view');
+    const titleEl = document.getElementById('page-title');
+
+    function setActiveLink(){
+      const hash = location.hash || '#/overview';
+      document.querySelectorAll('.nav a').forEach(a=>{
+        a.classList.toggle('active', a.getAttribute('href')===hash);
+      });
+    }
+
+    function render(){
+      const hash = location.hash || '#/overview';
+      const route = routes[hash] || routes['#/overview'];
+      views.forEach(v=>v.classList.add('hidden'));
+      document.getElementById(route.view).classList.remove('hidden');
+      titleEl.textContent = route.title;
+      setActiveLink();
+    }
+
+    window.addEventListener('hashchange', render);
+    window.addEventListener('load', ()=>{ if(!location.hash) location.hash = '#/overview'; render(); });
+  </script>
+  <script>
+    // ===== Overview (ภาพรวม) — Dynamic cards + charts from Google Sheets =====
+    function ov_cfg(){ try { return JSON.parse(localStorage.getItem('hug_settings_v1')||'{}'); } catch(e){ return {}; } }
+    async function ov_fetch(table){
+      const cfg = ov_cfg();
+      if(!cfg.appsScriptUrl || !cfg.apiToken) return { ok:false, rows:[] };
+      const url = `${cfg.appsScriptUrl}?table=${encodeURIComponent(table)}&token=${encodeURIComponent(cfg.apiToken)}`;
+      const res = await fetch(url);
+      return res.json();
+    }
+    function ov_thb(n){ return '฿' + Number(n||0).toLocaleString(); }
+
+    // Chart instances cache so we can destroy/update cleanly
+    const OV_CHARTS = { sales7:null, top5:null, costPie:null, costTrend:null };
+
+    function ov_set(id, value){
+      const el = document.getElementById(id);
+      if(el) el.textContent = value;
+    }
+
+    function ov_last7Days(){
+      const days = [];
+      const names = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+      const today = new Date();
+      for(let i=6;i>=0;i--){
+        const d = new Date(today);
+        d.setDate(d.getDate()-i);
+        days.push({ key: d.toISOString().slice(0,10), label: names[d.getDay()] });
+      }
+      return days;
+    }
+
+    function ov_lastNDays(n){
+      const days = [];
+      const names = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+      const today = new Date();
+      for(let i=n-1;i>=0;i--){
+        const d = new Date(today);
+        d.setDate(d.getDate()-i);
+        days.push({ key: d.toISOString().slice(0,10), label: names[d.getDay()] });
+      }
+      return days;
+    }
+
+    function ov_destroyChart(inst){
+      try{ if(inst && typeof inst.destroy==='function') inst.destroy(); } catch(_) {}
+      return null;
+    }
+
+    async function ov_reload(){
+      const [oRes, eRes, vRes] = await Promise.all([
+        ov_fetch('Orders'),
+        ov_fetch('Expenses'),
+        ov_fetch('ProductVariants')
+      ]);
+
+      const orders = (oRes && oRes.ok && Array.isArray(oRes.rows)) ? oRes.rows : [];
+      const expenses = (eRes && eRes.ok && Array.isArray(eRes.rows)) ? eRes.rows : [];
+      const variants = (vRes && vRes.ok && Array.isArray(vRes.rows)) ? vRes.rows : [];
+
+      // --- Cards ---
+      const totalOrders = orders.length;
+      const totalRevenue = orders.reduce((s,o)=>{
+        const st = String(o.status||'').trim();
+        if(st==='ยกเลิก') return s;
+        const v = Number(o.total_amount||0);
+        return s + (isFinite(v)?v:0);
+      },0);
+      const todayKey = (new Date()).toISOString().slice(0,10);
+      const todayRevenue = orders.reduce((s,o)=>{
+        const st = String(o.status||'').trim();
+        if(st==='ยกเลิก') return s;
+        const d = String(o.order_date||'').slice(0,10);
+        if(d!==todayKey) return s;
+        const v = Number(o.total_amount||0);
+        return s + (isFinite(v)?v:0);
+      },0);
+      const pendingCount = orders.filter(o => String(o.status||'').trim()==='รอชำระ').length;
+      const packCount = orders.filter(o => String(o.status||'').trim()==='พร้อมแพ็ก').length;
+      const lowStockCount = variants.filter(v=>{
+        const q = Number(v.quantity_on_hand||0);
+        const r = Number(v.reorder_point||0);
+        return isFinite(q) && isFinite(r) && q <= r;
+      }).length;
+
+      ov_set('ov_total_revenue', ov_thb(totalRevenue));
+      ov_set('ov_total_orders', String(totalOrders));
+      ov_set('ov_today_revenue', ov_thb(todayRevenue));
+      ov_set('ov_pending_count', String(pendingCount));
+      ov_set('ov_pack_count', String(packCount));
+      ov_set('ov_low_stock_count', String(lowStockCount));
+
+      // --- Sales last 7 days (line) ---
+      try{
+        const last7 = ov_last7Days();
+        const map = Object.create(null);
+        last7.forEach(d => map[d.key]=0);
+        orders.forEach(o=>{
+          const st = String(o.status||'').trim();
+          if(st==='ยกเลิก') return;
+          const k = String(o.order_date||'').slice(0,10);
+          if(map[k]===undefined) return;
+          const v = Number(o.total_amount||0);
+          map[k] += isFinite(v)?v:0;
+        });
+        const labels = last7.map(d=>d.label);
+        const data = last7.map(d=>map[d.key]);
+
+        const ctx = document.getElementById('sales7');
+        if(ctx && window.Chart){
+          OV_CHARTS.sales7 = ov_destroyChart(OV_CHARTS.sales7);
+          OV_CHARTS.sales7 = new Chart(ctx, {
+            type:'line',
+            data:{ labels, datasets:[{ label:'ยอดขาย (฿)', data, tension:.35, borderWidth:2, fill:false }] },
+            options:{ plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ color:textColor } }, y:{ ticks:{ color:textColor }, grid:{ color:'rgba(255,255,255,.06)' } } } }
+          });
+        }
+      }catch(err){ console.warn('sales7 error', err); }
+
+      // --- Top 5 products by qty (requires Order_Items; fallback to zero) ---
+      try{
+        const oiRes = await ov_fetch('Order_Items'); // expected columns: order_id, sku_variant, qty, unit_price
+        const items = (oiRes && oiRes.ok && Array.isArray(oiRes.rows)) ? oiRes.rows : [];
+        const qtyMap = new Map();
+        items.forEach(it=>{
+          const sku = it.sku_variant || it.sku || '—';
+          const q = Number(it.qty||0);
+          qtyMap.set(sku, (qtyMap.get(sku)||0) + (isFinite(q)?q:0));
+        });
+        const top = Array.from(qtyMap.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5);
+        const labels = top.length ? top.map(x=>x[0]) : ['SKU-A','SKU-B','SKU-C','SKU-D','SKU-E'];
+        const data = top.length ? top.map(x=>x[1]) : [0,0,0,0,0];
+
+        const ctx = document.getElementById('top5');
+        if(ctx && window.Chart){
+          OV_CHARTS.top5 = ov_destroyChart(OV_CHARTS.top5);
+          OV_CHARTS.top5 = new Chart(ctx, { type:'bar',
+            data:{ labels, datasets:[{ label:'จำนวนขาย', data }] },
+            options:{ plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ color:textColor } }, y:{ ticks:{ color:textColor }, grid:{ color:'rgba(255,255,255,.06)' } } } }
+          });
+        }
+      }catch(err){ console.warn('top5 error', err); }
+
+      // --- Expense share (pie) ---
+      try{
+        const catMap = new Map();
+        expenses.forEach(x=>{
+          const k = (x.category||'อื่น ๆ').toString();
+          const v = Number(x.amount||0);
+          catMap.set(k, (catMap.get(k)||0) + (isFinite(v)?v:0));
+        });
+        const labels = Array.from(catMap.keys());
+        const data = Array.from(catMap.values());
+        const ctx = document.getElementById('costPie');
+        if(ctx && window.Chart){
+          OV_CHARTS.costPie = ov_destroyChart(OV_CHARTS.costPie);
+          OV_CHARTS.costPie = new Chart(ctx, { type:'doughnut', data:{ labels, datasets:[{ data }] }, options:{ plugins:{ legend:{ labels:{ color:textColor } } } } });
+        }
+      }catch(err){ console.warn('pie error', err); }
+
+      // --- Expense trend (last 14 days) ---
+      try{
+        const lastN = ov_lastNDays(14);
+        const map = Object.create(null);
+        lastN.forEach(d => map[d.key] = 0);
+        expenses.forEach(x=>{
+          const k = String(x.date || '').slice(0,10);
+          const v = Number(x.amount || 0);
+          if(map[k] !== undefined && isFinite(v)) map[k] += v;
+        });
+        const labels = lastN.map(d => d.label);
+        const data = lastN.map(d => map[d.key]);
+        const ctx = document.getElementById('costTrend');
+        if(ctx && window.Chart){
+          OV_CHARTS.costTrend = ov_destroyChart(OV_CHARTS.costTrend);
+          OV_CHARTS.costTrend = new Chart(ctx, {
+            type:'line',
+            data:{ labels, datasets:[{ label:'ค่าใช้จ่าย (฿)', data, tension:.35, borderWidth:2, fill:false }] },
+            options:{ plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ color:textColor } }, y:{ ticks:{ color:textColor }, grid:{ color:'rgba(255,255,255,.06)' } } } }
+          });
+        }
+      }catch(err){ console.warn('cost trend error', err); }
+    }
+
+    // Hook router: refresh whenever landing on #/overview
+    (function hookOverview(){
+      const _render = window.render;
+      window.render = function(){
+        _render();
+        if((location.hash||'') === '#/overview') ov_reload();
+      };
+      // Also try once on load if already on overview
+      window.addEventListener('load', ()=>{ if((location.hash||'')==='#/overview') ov_reload(); });
+    })();
+  </script>
+  <script>
+    // --- Settings Persistence + Connection Test ---
+    const LS_KEY = 'hug_settings_v1';
+
+    function getEl(id){ return document.getElementById(id); }
+    function showToast(msg, type='success'){ const t = getEl('toast'); if(!t) return; t.textContent = msg; t.className = 'toast ' + (type==='success' ? 'success' : 'error') + ' show'; t.style.display='block'; setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>{ t.style.display='none'; },180); }, 1800); }
+
+    function loadSettings(){
+      try{
+        const raw = localStorage.getItem(LS_KEY);
+        if(!raw) return;
+        const cfg = JSON.parse(raw);
+        if(cfg.backendMode) getEl('backendMode').value = cfg.backendMode;
+        if(cfg.spreadsheetId) getEl('spreadsheetId').value = cfg.spreadsheetId;
+        if(cfg.appsScriptUrl) getEl('appsScriptUrl').value = cfg.appsScriptUrl;
+        if(cfg.apiKey) getEl('apiKey').value = cfg.apiKey;
+        if(cfg.apiToken) getEl('apiToken').value = cfg.apiToken;
+        if(cfg.sheetMap) getEl('sheetMap').value = typeof cfg.sheetMap==='string' ? cfg.sheetMap : JSON.stringify(cfg.sheetMap);
+        if(cfg.settingsNote) getEl('settingsNote').value = cfg.settingsNote;
+      }catch(e){ console.warn('loadSettings error', e); }
+    }
+
+    function saveSettings(){
+      const cfg = {
+        backendMode: getEl('backendMode').value,
+        spreadsheetId: getEl('spreadsheetId').value.trim(),
+        appsScriptUrl: getEl('appsScriptUrl').value.trim(),
+        apiKey: getEl('apiKey').value.trim(),
+        apiToken: getEl('apiToken').value.trim(),
+        sheetMap: getEl('sheetMap').value.trim(),
+        settingsNote: getEl('settingsNote').value.trim()
+      };
+      localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+      showToast('บันทึกการตั้งค่าแล้ว ✅','success');
+    }
+
+    async function testConnection(){
+      const url = getEl('appsScriptUrl').value.trim();
+      const token = getEl('apiToken').value.trim();
+      if(!url || !token){ showToast('กรุณาใส่ Apps Script URL และ Token ให้ครบ','error'); return; }
+      const testUrl = `${url}?table=Settings&token=${encodeURIComponent(token)}`;
+      try{
+        const res = await fetch(testUrl, { method:'GET' });
+        const js = await res.json();
+        if(js && js.ok){ showToast('เชื่อมต่อสำเร็จ 🎉','success'); }
+        else{ showToast('เชื่อมต่อไม่ได้: ' + (js && js.error ? js.error : 'unknown'), 'error'); }
+      }catch(err){ console.error(err); showToast('เชื่อมต่อไม่ได้ (ดู Console): ' + err.message, 'error'); }
+    }
+
+    // Wire events when Settings view becomes visible
+    window.addEventListener('load', ()=>{
+      loadSettings();
+      const btnSave = document.getElementById('btnSaveSettings');
+      const btnTest = document.getElementById('btnTestConn');
+      if(btnSave) btnSave.addEventListener('click', saveSettings);
+      if(btnTest) btnTest.addEventListener('click', testConnection);
+    });
+  </script>
+  <script>
+    // ===== Products: Add Product with 2-level variants (Color / Size) =====
+    // This overrides the legacy submit handler so we can saveทุกตัวแปรลงชีต ProductVariants
+    function api_cfg(){
+      try{
+        return JSON.parse(localStorage.getItem('hug_settings_v1') || '{}');
+      }catch(e){
+        return {};
+      }
+    }
+
+    async function api_append(table, data){
+      const cfg = api_cfg();
+      if(!cfg.appsScriptUrl || !cfg.apiToken){
+        if(typeof showToast === 'function'){
+          showToast('ยังไม่ได้ตั้งค่า Apps Script URL / Token','error');
+        }
+        throw new Error('Missing appsScriptUrl or apiToken');
+      }
+      const res = await fetch(cfg.appsScriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type':'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          token: cfg.apiToken,
+          table,
+          action: 'append',
+          data
+        })
+      });
+      return res.json();
+    }
+
+    function pr_uid(prefix){
+      return prefix + '_' + Math.random().toString(36).slice(2,10);
+    }
+
+    // ดึงข้อมูลจากตารางตัวแปร (สี/ไซส์) ใน Modal เพิ่มสินค้า
+    function pr_collectVariantsFromTable(productId, baseSku, reorderPoint){
+      const tbody = document.getElementById('ap_variantTableBody');
+      if(!tbody){
+        return [];
+      }
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const variants = [];
+
+      rows.forEach((tr) => {
+        const tds = tr.querySelectorAll('td');
+        if(tds.length < 5){
+          return; // ข้ามข้อความอธิบาย
+        }
+
+        const opt1Val = (tds[0].textContent || '').trim();
+        const opt2ValRaw = (tds[1].textContent || '').trim();
+        const opt2Val = opt2ValRaw === '–' ? '' : opt2ValRaw;
+
+        const priceInput = tds[2].querySelector('input');
+        const stockInput = tds[3].querySelector('input');
+        const skuInput   = tds[4].querySelector('input');
+
+        const sellingPrice = priceInput ? Number(priceInput.value || 0) : 0;
+        const qty          = stockInput ? Number(stockInput.value || 0) : 0;
+        const skuVariant   = (skuInput && skuInput.value.trim()) || baseSku;
+
+        // attributes ยังคงใช้ key ว่า color / size เพื่อให้เข้ากับโค้ดเดิม
+        const attrs = {};
+        if(opt1Val) attrs.color = opt1Val;
+        if(opt2Val) attrs.size  = opt2Val;
+
+        variants.push({
+          variant_id: pr_uid('VAR'),
+          product_id: productId,
+          sku_variant: skuVariant,
+          attributes: JSON.stringify(attrs),
+          quantity_on_hand: isFinite(qty) ? qty : 0,
+          reorder_point: isFinite(Number(reorderPoint)) ? Number(reorderPoint) : 0,
+          _selling_price: isFinite(sellingPrice) ? sellingPrice : 0   // ใช้เก็บราคาขายของตัวแปรนี้ (ช่วยตอนสร้าง Products)
+        });
+      });
+
+      return variants;
+    }
+
+    async function pr_handleAddProductSubmit(e){
+      // ใช้ capture + stopImmediatePropagation ปิด handler เก่า
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      const form = e.currentTarget;
+      const cfg = api_cfg();
+      if(!cfg.appsScriptUrl || !cfg.apiToken){
+        if(typeof showToast === 'function'){
+          showToast('ยังไม่ได้ตั้งค่า Apps Script URL / Token','error');
+        }
+        return;
+      }
+
+      const nameEl   = document.getElementById('ap_name');
+      const skuEl    = document.getElementById('ap_sku_variant');
+      const costEl   = document.getElementById('ap_cost');
+      const reorderEl= document.getElementById('ap_reorder');
+
+      const name  = nameEl ? nameEl.value.trim() : '';
+      const sku   = skuEl ? skuEl.value.trim() : '';
+      const cost  = costEl ? Number(costEl.value || 0) : 0;
+      const rpoint= reorderEl ? Number(reorderEl.value || 0) : 0;
+
+      if(!name || !sku){
+        if(typeof showToast === 'function'){
+          showToast('กรุณากรอกชื่อสินค้าและ SKU ให้ครบ','error');
+        }
+        return;
+      }
+
+      const productId = pr_uid('PRD');
+
+      // ดึงข้อมูลตัวแปรจากตารางสี/ไซส์
+      let variants = pr_collectVariantsFromTable(productId, sku, rpoint);
+
+      // ถ้า user ยังไม่ได้สร้างตารางตัวแปร ให้สร้าง variant เดียวแบบ legacy
+      if(!variants.length){
+        variants = [{
+          variant_id: pr_uid('VAR'),
+          product_id: productId,
+          sku_variant: sku,
+          attributes: JSON.stringify({}),
+          quantity_on_hand: 0,
+          reorder_point: rpoint,
+          _selling_price: 0
+        }];
+      }
+
+      // ราคาขายหลักของ Products ใช้จากตัวแปรแรก (ส่วนใหญ่โอห์มจะตั้งราคาเดียวกันทั้งหมด)
+      const primarySellingPrice = variants[0]._selling_price || 0;
+
+      const productRow = {
+        product_id: productId,
+        sku_master: sku,
+        name: name,
+        description: '',
+        cost_price: isFinite(cost) ? cost : 0,
+        selling_price: isFinite(primarySellingPrice) ? primarySellingPrice : 0
+      };
+
+      try{
+        // 1) บันทึก Products
+        const prRes = await api_append('Products', productRow);
+        if(!prRes || !prRes.ok){
+          if(typeof showToast === 'function'){
+            showToast('บันทึกสินค้าไม่สำเร็จ','error');
+          }
+          return;
+        }
+
+        // 2) บันทึก ProductVariants ทุกตัว
+        for(const v of variants){
+          const { _selling_price, ...payload } = v;
+          await api_append('ProductVariants', payload);
+        }
+
+        if(typeof showToast === 'function'){
+          showToast('บันทึกสินค้าและตัวแปรเรียบร้อย ✅','success');
+        }
+
+        // ปิด Modal แล้วรีเฟรชหน้า เพื่อให้ตารางสินค้าโหลดใหม่จากชีต
+        const modal = document.getElementById('addProductModal');
+        if(modal){
+          modal.classList.remove('show-modal');
+          modal.setAttribute('aria-hidden','true');
+        }
+        form.reset();
+        // ให้ Chart / ตารางใช้ข้อมูลล่าสุดง่าย ๆ ด้วยการ reload ทั้งหน้า
+        setTimeout(()=>{ window.location.reload(); }, 400);
+      }catch(err){
+        console.error('add product error', err);
+        if(typeof showToast === 'function'){
+          showToast('เกิดข้อผิดพลาดในการบันทึกสินค้า','error');
+        }
+      }
+    }
+
+    // ผูก handler แบบ capture เพื่อ override handler เก่า
+    window.addEventListener('load', ()=>{
+      const form = document.getElementById('addProductForm');
+      if(!form || form.dataset.boundProductsV2){ return; }
+      form.dataset.boundProductsV2 = '1';
+      form.addEventListener('submit', pr_handleAddProductSubmit, true);
+    });
+  </script>
+  <script>
+    // ===== Customers List + Add Customer Modal =====
+    function cu_cfg(){ try { return JSON.parse(localStorage.getItem('hug_settings_v1')||'{}'); } catch { return {}; } }
+    async function cu_fetch(table){
+      const cfg = cu_cfg();
+      if(!cfg.appsScriptUrl || !cfg.apiToken){
+        showToast && showToast('ยังไม่ได้ตั้งค่า URL/Token','error');
+        return { ok:false, rows:[] };
+      }
+      const url = `${cfg.appsScriptUrl}?table=${encodeURIComponent(table)}&token=${encodeURIComponent(cfg.apiToken)}`;
+      const res = await fetch(url);
+      return res.json();
+    }
+    async function cu_append(table, data){
+      const cfg = cu_cfg();
+      const res = await fetch(cfg.appsScriptUrl, {
+        method:'POST',
+        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+        body: JSON.stringify({ token: cfg.apiToken, table, action:'append', data })
+      });
+      return res.json();
+    }
+    function cu_uid(prefix='CUS'){ return `${prefix}_${Date.now().toString(36)}`; }
+
+    async function cu_loadProvinces(){
+      const sel = document.getElementById('cu_province');
+      if(!sel) return;
+      sel.innerHTML = '';
+      let list = [];
+      try{
+        const r = await cu_fetch('Provinces');
+        if(r && r.ok && Array.isArray(r.rows) && r.rows.length){
+          const names = new Set();
+          r.rows.forEach(x => {
+            const n = (x.name || x.province || x.Province || '').toString().trim();
+            if(n) names.add(n);
+          });
+          list = Array.from(names);
+        }
+      }catch(e){ /* ignore & fallback */ }
+      if(!list.length){
+        list = ['กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงใหม่','เชียงราย','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี'];
+      }
+      sel.innerHTML = list.map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+
+    async function loadCustomers(){
+      const body = document.getElementById('customersListBody');
+      if(!body) return;
+      body.innerHTML = `<tr><td colspan="6">กำลังโหลดข้อมูล...</td></tr>`;
+      try{
+        const r = await cu_fetch('Customers');
+        if(!r.ok){ body.innerHTML = `<tr><td colspan="6">ดึงข้อมูลไม่สำเร็จ</td></tr>`; return; }
+        const rows = (r.rows||[]).map(c=>{
+          const name = c.name || '—';
+          const email = c.email || '—';
+          const phone = c.phone || '—';
+          // สำหรับ demo ใส่ 0 ไว้ก่อน (รอเชื่อมยอดจาก Orders)
+          const totalOrders = c.total_orders || 0;
+          const totalAmount = c.total_amount ? Number(c.total_amount) : 0;
+          return `<tr>
+            <td>${name}</td>
+            <td>${email}</td>
+            <td>${phone}</td>
+            <td>${totalOrders}</td>
+            <td>฿${Number(totalAmount).toLocaleString()}</td>
+            <td><button class="btn">ดูโปรไฟล์</button></td>
+          </tr>`;
+        });
+        body.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="6">ไม่มีข้อมูล</td></tr>`;
+      }catch(e){
+        console.error(e);
+        body.innerHTML = `<tr><td colspan="6">เกิดข้อผิดพลาดในการโหลด</td></tr>`;
+      }
+    }
+
+    // Filter (client-side)
+    function bindCustomerSearch(){
+      const inp = document.getElementById('custSearch');
+      if(!inp || inp.dataset.bound) return;
+      inp.dataset.bound='1';
+      inp.addEventListener('input', ()=>{
+        const q = inp.value.toLowerCase().trim();
+        document.querySelectorAll('#customersListBody tr').forEach(tr=>{
+          const text = tr.textContent.toLowerCase();
+          tr.style.display = text.includes(q) ? '' : 'none';
+        });
+      });
+    }
+
+    function cu_open(){ const m = document.getElementById('addCustomerModal'); if(m){ m.classList.add('show-modal'); m.setAttribute('aria-hidden','false'); } }
+    function cu_close(){ const m = document.getElementById('addCustomerModal'); if(m){ m.classList.remove('show-modal'); m.setAttribute('aria-hidden','true'); } }
+
+    // Hook into router to lazy-load
+    (function hookCustomersRoute(){
+      const _render = window.render;
+      window.render = function(){
+        _render();
+        const hash = location.hash || '#/overview';
+        if(hash !== '#/customers/list') return;
+
+        // Load list
+        loadCustomers();
+        bindCustomerSearch();
+        cu_loadProvinces();
+
+        // Modal wiring (only once)
+        const btnOpen = document.getElementById('btnOpenAddCustomer');
+        const btnClose = document.getElementById('btnCloseAddCustomer');
+        const btnCancel = document.getElementById('btnCancelAddCustomer');
+        const modal = document.getElementById('addCustomerModal');
+        if(btnOpen && !btnOpen.dataset.bound){
+          btnOpen.dataset.bound='1';
+          btnOpen.addEventListener('click', ()=>{
+            cu_open();
+            cu_loadProvinces();
+          });
+        }
+        if(btnClose) btnClose.onclick = cu_close;
+        if(btnCancel) btnCancel.onclick = cu_close;
+        if(modal && !modal.dataset.boundOutside){
+          modal.dataset.boundOutside='1';
+          modal.addEventListener('click', (e)=>{ if(e.target===modal) cu_close(); });
+        }
+
+        // Submit form
+        const form = document.getElementById('addCustomerForm');
+        if(form && !form.dataset.bound){
+          form.dataset.bound='1';
+          form.addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            try{
+              let customer_id = (document.getElementById('cu_customer_id').value||'').trim();
+              if(!customer_id) customer_id = cu_uid();
+              const name = (document.getElementById('cu_name').value||'').trim();
+              const email = (document.getElementById('cu_email').value||'').trim();
+              const phone = (document.getElementById('cu_phone').value||'').trim();
+              const country = (document.getElementById('cu_country').value||'Thailand').trim();
+              const postcode = (document.getElementById('cu_postcode').value||'').trim();
+              const addr1 = (document.getElementById('cu_addr1').value||'').trim();
+              const addr2 = (document.getElementById('cu_addr2').value||'').trim();
+              const subdistrict = (document.getElementById('cu_subdistrict').value||'').trim();
+              const district = (document.getElementById('cu_district').value||'').trim();
+              const province = (document.getElementById('cu_province').value||'').trim();
+              const note = (document.getElementById('cu_note').value||'').trim();
+
+              if(postcode && !/^\d{5}$/.test(postcode)){
+                showToast && showToast('รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก','error');
+                return;
+              }
+
+              const payload = {
+                customer_id, name, email, phone,
+                address_line1: addr1,
+                address_line2: addr2,
+                subdistrict, district, province, postcode, country,
+                note
+              };
+
+              const r = await cu_append('Customers', payload);
+              if(r && r.ok){
+                showToast && showToast('เพิ่มลูกค้าเรียบร้อย ✅','success');
+                cu_close();
+                loadCustomers();
+              }else{
+                const msg = r && r.error ? r.error : 'บันทึกล้มเหลว';
+                showToast && showToast(msg, 'error');
+              }
+            }catch(err){
+              console.error(err);
+              showToast && showToast('บันทึกไม่สำเร็จ (ดู Console)','error');
+            }
+          });
+        }
+      };
+    })();
+  </script>
+  <script>
+    // ===== Expenses Add — POST to Google Sheets =====
+    function ex_cfg(){ try { return JSON.parse(localStorage.getItem('hug_settings_v1')||'{}'); } catch(e){ return {}; } }
+    function ex_uid(prefix='EXP'){ return `${prefix}_${Date.now().toString(36)}`; }
+    async function ex_post(table, payload){
+      const cfg = ex_cfg();
+      if(!cfg.appsScriptUrl || !cfg.apiToken){
+        if(typeof showToast==='function') showToast('ยังไม่ได้ตั้งค่า Apps Script URL / Token','error');
+        throw new Error('missing config');
+      }
+      const res = await fetch(cfg.appsScriptUrl, {
+        method:'POST',
+        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+        body: JSON.stringify({ token: cfg.apiToken, table, action:'append', data: payload })
+      });
+      return res.json();
+    }
+
+    // ===== Expenses List/Filter Helpers =====
+    async function ex_fetch(table){
+      const cfg = ex_cfg();
+      if(!cfg.appsScriptUrl || !cfg.apiToken){
+        if(typeof showToast==='function') showToast('ยังไม่ได้ตั้งค่า Apps Script URL / Token','error');
+        return { ok:false, rows:[] };
+      }
+      const url = `${cfg.appsScriptUrl}?table=${encodeURIComponent(table)}&token=${encodeURIComponent(cfg.apiToken)}`;
+      const res = await fetch(url);
+      return res.json();
+    }
+
+    function ex_formatTHB(n){ return '฿' + Number(n||0).toLocaleString(); }
+
+    function ex_startOfWeek(d){
+      const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const wd = dt.getDay(); // 0 Sun .. 6 Sat
+      const offset = (wd === 0 ? -6 : 1 - wd); // start Monday
+      dt.setDate(dt.getDate() + offset);
+      dt.setHours(0,0,0,0);
+      return dt;
+    }
+
+    function ex_inPeriod(dateStr, period, fromStr, toStr){
+      if(period === 'all') return true;
+      const d = new Date(dateStr || '');
+      if(isNaN(d.getTime())) return false;
+      const now = new Date();
+
+      if(period === 'week'){
+        const start = ex_startOfWeek(now);
+        const end = new Date(start); end.setDate(start.getDate()+6); end.setHours(23,59,59,999);
+        return d >= start && d <= end;
+      }
+      if(period === 'month'){
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth()+1, 0, 23,59,59,999);
+        return d >= start && d <= end;
+      }
+      if(period === 'year'){
+        const start = new Date(now.getFullYear(), 0, 1);
+        const end = new Date(now.getFullYear(), 11, 31, 23,59,59,999);
+        return d >= start && d <= end;
+      }
+      if(period === 'range'){
+        if(!fromStr && !toStr) return true;
+        const from = fromStr ? new Date(fromStr+'T00:00:00') : new Date('1970-01-01T00:00:00');
+        const to   = toStr   ? new Date(toStr+'T23:59:59')   : new Date('2999-12-31T23:59:59');
+        return d >= from && d <= to;
+      }
+      return true;
+    }
+
+    async function ex_reloadList(){
+      const body = document.getElementById('expensesListBody');
+      if(!body) return;
+
+      body.innerHTML = `<tr><td colspan="4">กำลังโหลดข้อมูล...</td></tr>`;
+      try{
+        const resp = await ex_fetch('Expenses');
+        if(!resp.ok){ body.innerHTML = `<tr><td colspan="4">ดึงข้อมูลไม่สำเร็จ</td></tr>`; return; }
+
+        const cat = (document.getElementById('ex_filter_category')?.value || '').trim();
+        const period = (document.getElementById('ex_filter_period')?.value || 'all');
+        const dFrom = document.getElementById('ex_filter_from')?.value || '';
+        const dTo   = document.getElementById('ex_filter_to')?.value || '';
+
+        let rows = resp.rows || [];
+        rows = rows.filter(r=>{
+          const okCat = !cat || (String(r.category||'').trim() === cat);
+          const okDate = ex_inPeriod(r.date, period, dFrom, dTo);
+          return okCat && okDate;
+        });
+
+        // sort desc by date
+        rows.sort((a,b)=> new Date(b.date||0) - new Date(a.date||0));
+
+        let total = 0;
+        const html = rows.map(r=>{
+          const amt = Number(r.amount || 0);
+          total += amt;
+          const date = r.date || '';
+          const cat = r.category || '—';
+          const note = r.note || '—';
+          return `<tr>
+            <td>${date}</td>
+            <td>${cat}</td>
+            <td style="text-align:right">${ex_formatTHB(amt)}</td>
+            <td>${note}</td>
+          </tr>`;
+        });
+
+        body.innerHTML = html.length ? html.join('') : `<tr><td colspan="4">ไม่มีข้อมูล</td></tr>`;
+        const tAmt = document.getElementById('ex_total_amount'); if(tAmt) tAmt.textContent = ex_formatTHB(total);
+        const tRows = document.getElementById('ex_total_rows'); if(tRows) tRows.textContent = `${rows.length} รายการ`;
+      }catch(err){
+        console.error(err);
+        body.innerHTML = `<tr><td colspan="4">เกิดข้อผิดพลาดในการโหลด</td></tr>`;
+      }
+    }
+
+    function ex_bindFilters(){
+      const periodSel = document.getElementById('ex_filter_period');
+      const applyBtn  = document.getElementById('ex_filter_apply');
+      const catSel    = document.getElementById('ex_filter_category');
+      const fromEl    = document.getElementById('ex_filter_from');
+      const toEl      = document.getElementById('ex_filter_to');
+
+      if(periodSel && !periodSel.dataset.bound){
+        periodSel.dataset.bound='1';
+        periodSel.addEventListener('change', ()=>{
+          const v = periodSel.value;
+          const today = (new Date()).toISOString().slice(0,10);
+          if(v==='week' || v==='month' || v==='year'){
+            fromEl.value = ''; toEl.value = '';
+          }
+          if(v==='range' && !fromEl.value && !toEl.value){ fromEl.value = today; toEl.value = today; }
+        });
+      }
+      if(catSel && !catSel.dataset.bound){
+        catSel.dataset.bound='1';
+        catSel.addEventListener('change', ex_reloadList);
+      }
+      if(applyBtn && !applyBtn.dataset.bound){
+        applyBtn.dataset.bound='1';
+        applyBtn.addEventListener('click', (e)=>{ e.preventDefault(); ex_reloadList(); });
+      }
+    }
+
+    (function hookExpensesRoute(){
+      const _render = window.render;
+      window.render = function(){
+        _render();
+        if((location.hash||'') !== '#/expenses/add') return;
+
+        const form = document.getElementById('expenseForm');
+        const dateEl = document.getElementById('ex_date');
+        const clearBtn = document.getElementById('btnClearExpense');
+
+        if(dateEl && !dateEl.value){ dateEl.value = (new Date()).toISOString().slice(0,10); }
+        if(clearBtn && !clearBtn.dataset.bound){
+          clearBtn.dataset.bound='1';
+          clearBtn.addEventListener('click', ()=>{
+            document.getElementById('ex_category').selectedIndex = 0;
+            document.getElementById('ex_amount').value = '';
+            document.getElementById('ex_note').value = '';
+            const d = document.getElementById('ex_date');
+            if(d) d.value = (new Date()).toISOString().slice(0,10);
+          });
+        }
+
+        ex_bindFilters();
+        ex_reloadList();
+
+        if(form && !form.dataset.bound){
+          form.dataset.bound='1';
+          form.addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            try{
+              const category = (document.getElementById('ex_category').value||'').trim();
+              const amountStr = (document.getElementById('ex_amount').value||'').trim();
+              const amount = Number(amountStr||0);
+              const date = (document.getElementById('ex_date').value||'').trim() || (new Date()).toISOString().slice(0,10);
+              const note = (document.getElementById('ex_note').value||'').trim();
+
+              if(!amountStr || isNaN(amount)){ showToast && showToast('กรุณากรอกจำนวนเงินให้ถูกต้อง','error'); return; }
+              if(amount < 0){ showToast && showToast('จำนวนเงินต้องไม่ติดลบ','error'); return; }
+
+              const row = { expense_id: ex_uid(), date, category, amount, note };
+              const r = await ex_post('Expenses', row);
+              if(r && r.ok){
+                showToast && showToast('บันทึกรายจ่ายเรียบร้อย ✅','success');
+                form.reset();
+                if(dateEl) dateEl.value = (new Date()).toISOString().slice(0,10);
+                ex_reloadList();
+              }else{
+                const msg = (r && r.error) ? r.error : 'บันทึกล้มเหลว';
+                showToast && showToast(msg, 'error');
+              }
+            }catch(err){
+              console.error(err);
+              showToast && showToast('บันทึกไม่สำเร็จ (ดู Console)','error');
+            }
+          });
+        }
+      };
+    })();
+  </script>
+  <script>
+    // ===== Summary (Revenue, OPEX, Gross, Net) from Google Sheets =====
+    function sm_cfg(){ try { return JSON.parse(localStorage.getItem('hug_settings_v1')||'{}'); } catch(e){ return {}; } }
+    async function sm_fetch(table){
+      const cfg = sm_cfg();
+      if(!cfg.appsScriptUrl || !cfg.apiToken) return { ok:false, rows:[] };
+      const url = `${cfg.appsScriptUrl}?table=${encodeURIComponent(table)}&token=${encodeURIComponent(cfg.apiToken)}`;
+      const res = await fetch(url);
+      return res.json();
+    }
+    function sm_thb(n){ return '฿' + Number(n||0).toLocaleString(); }
+
+    function sm_groupByMonth(rows, dateKey, valueGetter){
+      const map = new Map();
+      rows.forEach(r=>{
+        const d = new Date(r[dateKey] || '');
+        if(isNaN(d)) return;
+        const k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+        map.set(k, (map.get(k)||0) + Number(valueGetter(r)||0));
+      });
+      const labels = Array.from(map.keys()).sort().slice(-12);
+      return labels.map(k=>({ label:k, value: map.get(k) }));
+    }
+
+    async function sm_reload(){
+      const [oRes, eRes] = await Promise.all([ sm_fetch('Orders'), sm_fetch('Expenses') ]);
+      const orders = (oRes && oRes.ok && oRes.rows) ? oRes.rows : [];
+      const expenses = (eRes && eRes.ok && eRes.rows) ? eRes.rows : [];
+
+      // Revenue = sum(total_amount) excluding canceled
+      const revenue = orders.reduce((s,o)=>{
+        const st = String(o.status||'').trim();
+        if(st === 'ยกเลิก') return s;
+        const v = Number(o.total_amount||0);
+        return s + (isFinite(v)?v:0);
+      },0);
+
+      // COGS placeholder (0) until Order_Items is added
+      const cogs = 0;
+      const gross = revenue - cogs;
+
+      // OPEX = sum(expenses.amount)
+      const opex = expenses.reduce((s,x)=>{
+        const v = Number(x.amount||0);
+        return s + (isFinite(v)?v:0);
+      },0);
+
+      const net = gross - opex;
+
+      const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent = sm_thb(val); };
+      set('sum_revenue', revenue);
+      set('sum_cogs', cogs);
+      set('sum_gross', gross);
+      set('sum_opex', opex);
+      set('sum_net', net);
+
+      // Net Profit trend (by month)
+      try{
+        const revM = sm_groupByMonth(orders, 'order_date', r => (String(r.status||'').trim()==='ยกเลิก') ? 0 : Number(r.total_amount||0));
+        const opexM = sm_groupByMonth(expenses, 'date', r => Number(r.amount||0));
+        const allKeys = Array.from(new Set([...revM.map(x=>x.label), ...opexM.map(x=>x.label)])).sort();
+        const revMap = Object.fromEntries(revM.map(x=>[x.label,x.value]));
+        const opxMap = Object.fromEntries(opexM.map(x=>[x.label,x.value]));
+        const netSeries = allKeys.map(k => (revMap[k]||0) - (opxMap[k]||0));
+
+        const ctx = document.getElementById('netTrend');
+        if(ctx && window.Chart){
+          if(ctx._chartInstance) ctx._chartInstance.destroy();
+          const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#e5e7eb';
+          ctx._chartInstance = new Chart(ctx, {
+            type:'line',
+            data:{ labels: allKeys, datasets:[{ label:'กำไรสุทธิ/เดือน', data: netSeries, tension:.35, borderWidth:2, fill:false }] },
+            options:{ plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ color:textColor } }, y:{ ticks:{ color:textColor }, grid:{ color:'rgba(255,255,255,.06)' } } } }
+          });
+        }
+      }catch(err){ console.warn('net trend error', err); }
+    }
+
+    // Hook router: whenever visiting #/summary, reload figures
+    (function hookSummary(){
+      const _render = window.render;
+      window.render = function(){
+        _render();
+        if((location.hash||'') === '#/summary') sm_reload();
+      };
+    })();
+  </script>
 </body>
+<script>
+  // ===== Load Products (Google Sheets) =====
+  function getCfgProd() {
+    try { return JSON.parse(localStorage.getItem('hug_settings_v1') || '{}'); }
+    catch { return {}; }
+  }
+
+  async function fetchTableProd(table) {
+    const cfg = getCfgProd();
+    if (!cfg.appsScriptUrl || !cfg.apiToken) {
+      if (typeof showToast === 'function') showToast('ยังไม่ได้ตั้งค่า Apps Script URL / Token', 'error');
+      return { ok:false, rows:[] };
+    }
+    const url = `${cfg.appsScriptUrl}?table=${encodeURIComponent(table)}&token=${encodeURIComponent(cfg.apiToken)}`;
+    const res = await fetch(url);
+    return res.json();
+  }
+
+  function formatCurrencyTHB(n){
+    const num = Number(n || 0);
+    return '฿' + num.toLocaleString();
+  }
+
+  async function loadProductsAll(){
+    const body = document.getElementById('productsAllBody');
+    if (!body) return;
+    body.innerHTML = `<tr><td colspan="7">กำลังโหลดข้อมูล...</td></tr>`;
+
+    try{
+      const [variantsRes, productsRes] = await Promise.all([
+        fetchTableProd('ProductVariants'),
+        fetchTableProd('Products'),
+      ]);
+
+      if (!variantsRes.ok || !productsRes.ok) {
+        body.innerHTML = `<tr><td colspan="7">ดึงข้อมูลไม่สำเร็จ</td></tr>`;
+        if (typeof showToast === 'function') showToast('ดึงข้อมูลไม่สำเร็จ', 'error');
+        return;
+      }
+
+      const productsById = {};
+      (productsRes.rows || []).forEach(p => { productsById[p.product_id] = p; });
+
+      const rows = (variantsRes.rows || []).map(v => {
+        const p = productsById[v.product_id] || {};
+        let attrs = '—';
+        let a = {};
+        try {
+          a = typeof v.attributes === 'string' ? JSON.parse(v.attributes || '{}') : (v.attributes || {});
+          const ordered = [];
+          const color = a.color || a['สี'];
+          const size  = a.size  || a['ไซส์'];
+          const style = a.style || a['สไตล์'];
+          if (color) ordered.push(String(color));
+          if (size)  ordered.push(String(size));
+          if (style) ordered.push(String(style));
+          if (!ordered.length) {
+            const fallback = [];
+            Object.values(a).forEach(val => { if (val !== undefined && val !== null && String(val).trim() !== '') fallback.push(String(val)); });
+            attrs = fallback.length ? fallback.join(' / ') : '—';
+          } else {
+            attrs = ordered.join(' / ');
+          }
+        } catch { a = {}; }
+
+        const qty = v.quantity_on_hand || 0;
+        const cost = p.cost_price ? Number(p.cost_price) : 0;
+        const price = p.selling_price ? Number(p.selling_price) : 0;
+
+        return `
+          <tr>
+            <td>${v.sku_variant || '—'}</td>
+            <td>${p.name || '—'}</td>
+            <td>${attrs}</td>
+            <td>${qty}</td>
+            <td>${formatCurrencyTHB(cost)}</td>
+            <td>${formatCurrencyTHB(price)}</td>
+            <td>
+              <button class="btn" data-edit='${encodeURIComponent(JSON.stringify({
+                variant_id: v.variant_id || "",
+                product_id: v.product_id || "",
+                sku_variant: v.sku_variant || "",
+                name: p.name || "",
+                cost_price: cost,
+                selling_price: price,
+                color: (a && (a.color || a["สี"])) || "",
+                size: (a && (a.size || a["ไซส์"])) || "",
+                style: (a && (a.style || a["สไตล์"])) || "",
+                quantity_on_hand: Number(v.quantity_on_hand || 0),
+                reorder_point: Number(v.reorder_point || 0)
+              }))}'>แก้ไข</button>
+              <button class="btn danger" data-del='${v.variant_id || ""}'>ลบ</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      body.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="7">ไม่มีข้อมูล</td></tr>`;
+      if (typeof showToast === 'function') showToast('โหลดสินค้าสำเร็จ ✅', 'success');
+    } catch(err){
+      console.error(err);
+      body.innerHTML = `<tr><td colspan="7">เกิดข้อผิดพลาดในการโหลด</td></tr>`;
+      if (typeof showToast === 'function') showToast('โหลดข้อมูลล้มเหลว (ดู Console)', 'error');
+    }
+  }
+
+  // Color datalist loader for Add Product modal
+  async function ap_loadColors(){
+    const listEl = document.getElementById('colorList');
+    if(!listEl) return;
+    listEl.innerHTML = '';
+    let options = ['ดำ','ขาว','เทา','น้ำเงิน','แดง','เขียว','เหลือง','ชมพู','ม่วง','น้ำตาล','ครีม'];
+    try{
+      const res = await fetchTableProd('Colors');
+      if(res && res.ok && Array.isArray(res.rows) && res.rows.length){
+        const set = new Set();
+        res.rows.forEach(r=>{
+          const name = (r.color_name || r.name || r.Color || '').toString().trim();
+          if(name) set.add(name);
+        });
+        if(set.size) options = Array.from(set);
+      }
+    }catch(e){ /* fallback */ }
+    options.forEach(c=>{
+      const opt = document.createElement('option');
+      opt.value = c;
+      listEl.appendChild(opt);
+    });
+  }
+
+  // Hook into the simple router
+  (function hookProductsRoute(){
+    const _render = window.render;
+    window.render = function(){
+      _render();
+      const hash = location.hash || '#/overview';
+      if (hash === '#/products/all') loadProductsAll();
+    };
+  })();
+</script>
+<script>
+  // --- Add Product Modal + POST to Sheets ---
+  function ap_getCfg(){ try { return JSON.parse(localStorage.getItem('hug_settings_v1') || '{}'); } catch { return {}; } }
+  function ap_open(){ document.getElementById('addProductModal').classList.add('show-modal'); document.getElementById('addProductModal').setAttribute('aria-hidden','false'); }
+  function ap_close(){ document.getElementById('addProductModal').classList.remove('show-modal'); document.getElementById('addProductModal').setAttribute('aria-hidden','true'); }
+  function ap_uid(prefix='PRD'){ const t = Date.now().toString(36); return `${prefix}_${t}`; }
+
+  async function ap_post(table, payload){
+    const cfg = ap_getCfg();
+    const url = cfg.appsScriptUrl;
+    const token = cfg.apiToken;
+    if(!url || !token){
+      if (typeof showToast==='function') showToast('ยังไม่ได้ตั้งค่า URL/Token','error');
+      throw new Error('missing config');
+    }
+    // Use text/plain to avoid CORS preflight (OPTIONS 405 from Apps Script)
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ token, table, action: 'append', data: payload })
+    });
+    return res.json();
+  }
+
+  // NOTE: Apps Script must implement 'upsert' and 'delete' actions. If it returns {ok:false, error:'unknown_action'},
+  // please update GS code accordingly.
+  async function ap_upsert(table, key, keyVal, payload){
+    const cfg = ap_getCfg();
+    const url = cfg.appsScriptUrl; const token = cfg.apiToken;
+    const res = await fetch(url, {
+      method:'POST',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify({ token, table, action:'upsert', key, keyVal, data: payload })
+    });
+    return res.json();
+  }
+
+  async function ap_delete(table, key, keyVal){
+    const cfg = ap_getCfg();
+    const url = cfg.appsScriptUrl; const token = cfg.apiToken;
+    const res = await fetch(url, {
+      method:'POST',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify({ token, table, action:'delete', key, keyVal })
+    });
+    return res.json();
+  }
+
+  // Wire UI events
+  window.addEventListener('load', ()=>{
+    ap_loadColors();
+    const btnOpen = document.getElementById('btnOpenAddProduct');
+    const btnClose = document.getElementById('btnCloseAddProduct');
+    const btnCancel = document.getElementById('btnCancelAddProduct');
+    const modal = document.getElementById('addProductModal');
+    if(btnOpen) btnOpen.addEventListener('click', ap_open);
+    if(btnClose) btnClose.addEventListener('click', ap_close);
+    if(btnCancel) btnCancel.addEventListener('click', ap_close);
+    if(modal) modal.addEventListener('click', (e)=>{ if(e.target===modal) ap_close(); });
+
+    const form = document.getElementById('addProductForm');
+    if(form){
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        try{
+          // gather inputs
+          let product_id = document.getElementById('ap_product_id').value.trim();
+          if(!product_id) product_id = ap_uid('PRD');
+          const name = document.getElementById('ap_name').value.trim();
+          const cost = Number(document.getElementById('ap_cost').value||0);
+          const price = Number(document.getElementById('ap_price').value||0);
+          const sku_variant = document.getElementById('ap_sku_variant').value.trim();
+          const qty = Number(document.getElementById('ap_qty').value||0);
+          const color = document.getElementById('ap_color').value.trim();
+          const size  = document.getElementById('ap_size').value.trim();
+          const style = document.getElementById('ap_style').value.trim();
+          const attrObj = {};
+          if (color) attrObj.color = color;
+          if (size)  attrObj.size  = size;
+          if (style) attrObj.style = style;
+          const reorder = Number(document.getElementById('ap_reorder').value||0);
+
+          // 1) ensure product row exists
+          await ap_post('Products', { product_id, sku_master: product_id, name, description:'', cost_price: cost, selling_price: price });
+
+          // 2) append variant
+          const attributes = JSON.stringify(attrObj);
+          const variant_id = ap_uid('VAR');
+          await ap_post('ProductVariants', { variant_id, product_id, sku_variant, attributes, quantity_on_hand: qty, reorder_point: reorder });
+
+          if (typeof showToast==='function') showToast('เพิ่มสินค้าเรียบร้อย ✅','success');
+          ap_close();
+          loadProductsAll && loadProductsAll();
+        }catch(err){ console.error(err); if (typeof showToast==='function') showToast('บันทึกไม่สำเร็จ (ดู Console)','error'); }
+      });
+    }
+
+    // ---- Edit / Delete wiring ----
+    const tbody = document.getElementById('productsAllBody');
+
+    function ep_open(){ document.getElementById('editProductModal').classList.add('show-modal'); document.getElementById('editProductModal').setAttribute('aria-hidden','false'); }
+    function ep_close(){ document.getElementById('editProductModal').classList.remove('show-modal'); document.getElementById('editProductModal').setAttribute('aria-hidden','true'); }
+
+    // Fill edit form
+    function fillEditForm(data){
+      document.getElementById('ep_product_id').value = data.product_id || '';
+      document.getElementById('ep_sku_variant').value = data.sku_variant || '';
+      document.getElementById('ep_name').value = data.name || '';
+      document.getElementById('ep_cost').value = Number(data.cost_price || 0);
+      document.getElementById('ep_price').value = Number(data.selling_price || 0);
+      document.getElementById('ep_qty').value = Number(data.quantity_on_hand || 0);
+      document.getElementById('ep_color').value = data.color || '';
+      document.getElementById('ep_size').value = data.size || '';
+      document.getElementById('ep_style').value = data.style || '';
+      document.getElementById('ep_reorder').value = Number(data.reorder_point || 0);
+      // store keys on form dataset
+      const form = document.getElementById('editProductForm');
+      form.dataset.variantId = data.variant_id || '';
+    }
+
+    if(tbody){
+      tbody.addEventListener('click', async (e)=>{
+        const btn = e.target.closest('button');
+        if(!btn) return;
+
+        // Edit
+        if(btn.hasAttribute('data-edit')){
+          try{
+            const raw = decodeURIComponent(btn.getAttribute('data-edit'));
+            const data = JSON.parse(raw);
+            fillEditForm(data);
+            ep_open();
+          }catch(err){ console.error(err); showToast && showToast('เปิดหน้าแก้ไขไม่ได้','error'); }
+          return;
+        }
+
+        // Delete
+        if(btn.hasAttribute('data-del')){
+          const variantId = btn.getAttribute('data-del');
+          if(!variantId) return;
+          if(!confirm('ลบตัวแปรสินค้านี้หรือไม่?')) return;
+          try{
+            const delRes = await ap_delete('ProductVariants','variant_id', variantId);
+            if(delRes && delRes.ok){
+              showToast && showToast('ลบสำเร็จ ✅','success');
+              loadProductsAll && loadProductsAll();
+            }else{
+              const msg = delRes && delRes.error ? delRes.error : 'ลบไม่สำเร็จ';
+              showToast && showToast(msg,'error');
+            }
+          }catch(err){ console.error(err); showToast && showToast('ลบไม่สำเร็จ (ดู Console)','error'); }
+          return;
+        }
+      });
+    }
+
+    // Edit modal events
+    const epClose = document.getElementById('btnCloseEditProduct');
+    const epCancel = document.getElementById('btnCancelEditProduct');
+    if(epClose) epClose.addEventListener('click', ep_close);
+    if(epCancel) epCancel.addEventListener('click', ep_close);
+    const epModal = document.getElementById('editProductModal');
+    if(epModal) epModal.addEventListener('click', (e)=>{ if(e.target===epModal) ep_close(); });
+
+    // Submit edit
+    const epForm = document.getElementById('editProductForm');
+    if(epForm){
+      epForm.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        try{
+          const product_id = document.getElementById('ep_product_id').value.trim();
+          const sku_variant = document.getElementById('ep_sku_variant').value.trim();
+          const name = document.getElementById('ep_name').value.trim();
+          const cost = Number(document.getElementById('ep_cost').value||0);
+          const price = Number(document.getElementById('ep_price').value||0);
+          const qty = Number(document.getElementById('ep_qty').value||0);
+          const color = document.getElementById('ep_color').value.trim();
+          const size  = document.getElementById('ep_size').value.trim();
+          const style = document.getElementById('ep_style').value.trim();
+          const reorder = Number(document.getElementById('ep_reorder').value||0);
+          const variant_id = epForm.dataset.variantId || '';
+
+          // upsert product (by product_id)
+          let r1 = await ap_upsert('Products','product_id', product_id, { product_id, sku_master: product_id, name, description:'', cost_price: cost, selling_price: price });
+          // upsert variant (by variant_id)
+          const attributes = JSON.stringify({ color, size, style });
+          let r2 = await ap_upsert('ProductVariants','variant_id', variant_id, { variant_id, product_id, sku_variant, attributes, quantity_on_hand: qty, reorder_point: reorder });
+
+          if((r1 && r1.ok) && (r2 && r2.ok)){
+            showToast && showToast('อัปเดตสินค้าเรียบร้อย ✅','success');
+            ep_close();
+            loadProductsAll && loadProductsAll();
+          }else{
+            const msg = (r1 && !r1.ok && r1.error) || (r2 && !r2.ok && r2.error) || 'บันทึกไม่สำเร็จ';
+            showToast && showToast(msg, 'error');
+          }
+        }catch(err){ console.error(err); showToast && showToast('บันทึกไม่สำเร็จ (ดู Console)','error'); }
+      });
+    }
+  });
+</script>
+<script>
+  // ===== Create Order Modal + POST to Sheets =====
+  function ord_cfg(){ try { return JSON.parse(localStorage.getItem('hug_settings_v1')||'{}'); } catch { return {}; } }
+  function ord_open(){ const m=document.getElementById('createOrderModal'); if(m){ m.classList.add('show-modal'); m.setAttribute('aria-hidden','false'); } }
+  function ord_close(){ const m=document.getElementById('createOrderModal'); if(m){ m.classList.remove('show-modal'); m.setAttribute('aria-hidden','true'); } }
+  function ord_id(){ const n=Date.now().toString(36).toUpperCase(); return `ORD-${n.slice(-5)}`; }
+  async function ord_post(table, payload){
+    const cfg = ord_cfg();
+    if(!cfg.appsScriptUrl || !cfg.apiToken){ showToast && showToast('ยังไม่ได้ตั้งค่า URL/Token','error'); throw new Error('missing config'); }
+    const res = await fetch(cfg.appsScriptUrl, {
+      method:'POST',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify({ token: cfg.apiToken, table, action:'append', data: payload })
+    });
+    return res.json();
+  }
+
+  function ord_loadProvinces(){
+    const sel = document.getElementById('co_province');
+    if(!sel) return;
+    const provinces = [
+      'กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงใหม่','เชียงราย','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี'
+    ];
+    sel.innerHTML = provinces.map(p => `<option value="${p}">${p}</option>`).join('');
+  }
+
+  // Wire UI when Orders view is used
+  (function hookOrdersRoute(){
+    const _render = window.render;
+    window.render = function(){
+      _render();
+      // Only attach events once DOM is present
+      const hash = location.hash || '#/overview';
+      if(hash !== '#/orders/all') return;
+
+      const btnOpen = document.querySelector('#view-orders-all .toolbar .btn.primary');
+      if(btnOpen && !btnOpen.dataset.bound){
+        btnOpen.dataset.bound='1';
+        btnOpen.addEventListener('click', ord_open);
+      }
+      const m = document.getElementById('createOrderModal');
+      const bClose = document.getElementById('btnCloseCreateOrder');
+      const bCancel = document.getElementById('btnCancelCreateOrder');
+      if(bClose) bClose.onclick = ord_close;
+      if(bCancel) bCancel.onclick = ord_close;
+      if(m && !m.dataset.outsideBound){
+        m.dataset.outsideBound='1';
+        m.addEventListener('click', (e)=>{ if(e.target===m) ord_close(); });
+      }
+
+      const form = document.getElementById('createOrderForm');
+      if(form && !form.dataset.bound){
+        form.dataset.bound='1';
+        // default date today if empty
+        const d = document.getElementById('co_order_date');
+        if(d && !d.value){ d.value = (new Date()).toISOString().slice(0,10); }
+        ord_loadProvinces();
+
+        form.addEventListener('submit', async (e)=>{
+          e.preventDefault();
+          try{
+            let order_id = (document.getElementById('co_order_id').value||'').trim();
+            if(!order_id) order_id = ord_id();
+            const order_date = (document.getElementById('co_order_date').value||'').trim();
+            const status = document.getElementById('co_status').value || 'รอชำระ';
+            const customer_name = (document.getElementById('co_customer_name').value||'').trim();
+            const customer_email = (document.getElementById('co_customer_email').value||'').trim();
+            const customer_phone = (document.getElementById('co_customer_phone').value||'').trim();
+
+            const recipient_name  = (document.getElementById('co_recipient_name').value||'').trim();
+            const recipient_phone = (document.getElementById('co_recipient_phone').value||'').trim();
+            const country         = (document.getElementById('co_country').value||'Thailand').trim();
+            const address_line1   = (document.getElementById('co_addr1').value||'').trim();
+            const address_line2   = (document.getElementById('co_addr2').value||'').trim();
+            const subdistrict     = (document.getElementById('co_subdistrict').value||'').trim();
+            const district        = (document.getElementById('co_district').value||'').trim();
+            const province        = (document.getElementById('co_province').value||'').trim();
+            const postcode        = (document.getElementById('co_postcode').value||'').trim();
+            const shipping_note   = (document.getElementById('co_shipping_note').value||'').trim();
+
+            if(postcode && !/^\d{5}$/.test(postcode)){
+              showToast && showToast('รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก','error');
+              return;
+            }
+
+            const total_amount = Number(document.getElementById('co_total').value||0);
+            const note = (document.getElementById('co_note').value||'').trim();
+            // Expanded row for Orders sheet
+            const payload = {
+              order_id, order_date, status,
+              customer_name, customer_email, customer_phone,
+              recipient_name, recipient_phone,
+              address_line1, address_line2, subdistrict, district, province, postcode, country,
+              shipping_note,
+              total_amount, note
+            };
+            const r = await ord_post('Orders', payload);
+            if(r && r.ok){
+              showToast && showToast('สร้างออเดอร์เรียบร้อย ✅','success');
+              ord_close();
+              // (อัปเดตรายการบนตารางหน้านี้ไว้ภายหลัง)
+            }else{
+              const msg = r && r.error ? r.error : 'บันทึกไม่สำเร็จ';
+              showToast && showToast(msg, 'error');
+            }
+          }catch(err){
+            console.error(err);
+            showToast && showToast('บันทึกไม่สำเร็จ (ดู Console)','error');
+          }
+        });
+      }
+    };
+  })();
+</script>
 </html>
