@@ -339,7 +339,12 @@ function persistUserSession() {
     return;
   }
   try {
-    localStorage.setItem(USER_SESSION_KEY, JSON.stringify({ username: currentUser.username }));
+    localStorage.setItem(USER_SESSION_KEY, JSON.stringify({
+      username: currentUser.username,
+      displayName: currentUser.displayName,
+      roleLabel: currentUser.roleLabel,
+      permissions: currentUser.permissions || []
+    }));
   } catch (error) {
     console.warn('persist session failed', error);
   }
@@ -391,12 +396,20 @@ function restoreUserSession() {
   try {
     const stored = localStorage.getItem(USER_SESSION_KEY);
     if (!stored) return;
-    const { username } = JSON.parse(stored);
-    if (!username) return;
+    const parsed = JSON.parse(stored);
+    if (!parsed?.username) return;
+    const { username, displayName, roleLabel, permissions } = parsed;
     const account = getAccounts().find(acc => acc.username === username);
     if (account) {
       handleLoginSuccess(account, { silent: true });
+      return;
     }
+    handleLoginSuccess({
+      username,
+      displayName: displayName || username,
+      roleLabel: roleLabel || 'ผู้ใช้',
+      permissions: permissions || availablePermissionTabs.map(tab => tab.id)
+    }, { silent: true });
   } catch (error) {
     console.warn('restoreUserSession failed', error);
     try {
