@@ -15,6 +15,9 @@ let adminUIInitialized = false;
 let activeDropdownKey = 'categories';
 let activeCustomerHistoryId = null;
 let currentUser = null;
+let googleSheetSyncState = {
+  firstSyncDone: false
+};
 const USER_SESSION_KEY = 'hugderndoi-user-session';
 
 function cloneDefaultAccounts() {
@@ -106,6 +109,17 @@ const defaultSettings = {
     suppliers: ['บริษัท ABC จำกัด', 'ห้างหุ้นส่วน XYZ', 'ร้านค้าปลีก 123'],
     locations: ['ชั้น A แถว 1', 'ชั้น A แถว 2', 'ชั้น A แถว 3', 'ชั้น B แถว 1', 'ชั้น B แถว 2', 'ชั้น C แถว 1', 'คลังหลัก', 'คลังสำรอง']
   },
+  storageProfiles: [
+    {
+      id: 'storage-local-default',
+      name: 'Local Default',
+      type: 'local',
+      description: 'ข้อมูลที่เก็บภายในเบราว์เซอร์',
+      lastSynced: null,
+      created_at: new Date().toISOString()
+    }
+  ],
+  activeStorageId: 'storage-local-default',
   accounts: cloneDefaultAccounts(),
   roles: [
     {
@@ -185,6 +199,16 @@ function ensureAccountDefaults(targetSettings) {
       ...account,
       id: account.id || `account-${index}-${Date.now()}`
     }));
+  }
+}
+
+function ensureStorageDefaults(targetSettings) {
+  if (!targetSettings) return;
+  if (!Array.isArray(targetSettings.storageProfiles) || !targetSettings.storageProfiles.length) {
+    targetSettings.storageProfiles = JSON.parse(JSON.stringify(defaultSettings.storageProfiles));
+  }
+  if (!targetSettings.activeStorageId || !targetSettings.storageProfiles.some(profile => profile.id === targetSettings.activeStorageId)) {
+    targetSettings.activeStorageId = targetSettings.storageProfiles[0].id;
   }
 }
 
@@ -406,10 +430,30 @@ const dataHandler = {
   }
 };
 
+function bootstrapOfflineMode() {
+  if (!systemSettings) {
+    systemSettings = cloneDefaultSettings();
+  }
+  ensureDropdownDefaults(systemSettings);
+  ensureAccountDefaults(systemSettings);
+  ensureStorageDefaults(systemSettings);
+  applySettingsToUI();
+  initializeAdminEventHandlers();
+  restoreUserSession();
+}
+
 async function initApp() {
+  const hasDataSdk = typeof window !== 'undefined' && window.dataSdk && typeof window.dataSdk.init === 'function';
+  if (!hasDataSdk) {
+    console.warn('data SDK unavailable, running in offline mode');
+    bootstrapOfflineMode();
+    return;
+  }
+
   const initResult = await window.dataSdk.init(dataHandler);
   if (!initResult.isOk) {
-    console.error('Failed to initialize data SDK');
+    console.error('Failed to initialize data SDK, using offline mode');
+    bootstrapOfflineMode();
     return;
   }
 
@@ -495,6 +539,8 @@ async function initializeSettings() {
     if (!settingsRecord) {
       systemSettings = cloneDefaultSettings();
       ensureDropdownDefaults(systemSettings);
+      ensureAccountDefaults(systemSettings);
+      ensureStorageDefaults(systemSettings);
       const payload = {
         type: 'settings',
         settings: systemSettings,
@@ -509,6 +555,7 @@ async function initializeSettings() {
       systemSettings = mergeSettingsData(settingsRecord.settings);
       ensureDropdownDefaults(systemSettings);
       ensureAccountDefaults(systemSettings);
+      ensureStorageDefaults(systemSettings);
     }
     applySettingsToUI();
     renderDropdownTypeOptions();
@@ -517,6 +564,9 @@ async function initializeSettings() {
   } catch (error) {
     console.error('เกิดข้อผิดพลาดในการโหลดการตั้งค่า', error);
     systemSettings = cloneDefaultSettings();
+    ensureDropdownDefaults(systemSettings);
+    ensureAccountDefaults(systemSettings);
+    ensureStorageDefaults(systemSettings);
   }
 }
 
@@ -576,6 +626,7 @@ async function persistSettingsChanges(successMessage) {
 
 function applySettingsToUI() {
   if (!systemSettings) return;
+  ensureStorageDefaults(systemSettings);
   applySystemBranding();
   renderDropdownOptions();
   populateAdminGeneralForm();
@@ -585,6 +636,8 @@ function applySettingsToUI() {
   ensureAccountDefaults(systemSettings);
   renderAccountPermissionOptions();
   renderUserAccounts();
+  renderStorageProfiles();
+  syncExternalDataIfNeeded().catch(error => console.error('syncExternalDataIfNeeded error', error));
 }
 
 function applySystemBranding() {
@@ -816,6 +869,25 @@ function initializeAdminEventHandlers() {
       } else if (deleteBtn) {
         await deleteAccount(deleteBtn.dataset.deleteAccount);
       }
+    });
+  }
+
+  const storageForm = document.getElementById('storage-form');
+  if (storageForm) {
+    storageForm.addEventListener('submit', handleStorageFormSubmit);
+  }
+
+  const storageList = document.getElementById('storage-list');
+  if (storageList) {
+    storageList.addEventListener('click', handleStorageListClick);
+    storageList.addEventListener('change', handleStorageActiveChange);
+  }
+
+  const storageTypeSelect = document.getElementById('storage-type');
+  if (storageTypeSelect) {
+    toggleStorageGoogleFields(storageTypeSelect.value);
+    storageTypeSelect.addEventListener('change', (event) => {
+      toggleStorageGoogleFields(event.target.value);
     });
   }
 
@@ -1144,6 +1216,318 @@ async function handleAccountFormSubmit(event) {
   }
   resetAccountForm();
   renderUserAccounts();
+}
+
+function getStorageProfiles() {
+  if (!systemSettings) return [];
+  ensureStorageDefaults(systemSettings);
+  return Array.isArray(systemSettings.storageProfiles) ? systemSettings.storageProfiles : [];
+}
+
+function getStorageTypeLabel(type) {
+  const labels = {
+    local: 'Local Storage',
+    'google-sheet': 'Google Sheet'
+  };
+  return labels[type] || type || '-';
+}
+
+function formatStorageTimestamp(value) {
+  if (!value) return 'ยังไม่เคยซิงค์';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 'ไม่ทราบเวลา';
+  }
+  return date.toLocaleString('th-TH', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  });
+}
+
+function renderStorageProfiles() {
+  const tbody = document.getElementById('storage-list');
+  if (!tbody) return;
+  const profiles = getStorageProfiles();
+  if (!profiles.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="py-4 px-3 text-center text-gray-500">ยังไม่มี storage ถูกบันทึก</td></tr>`;
+    return;
+  }
+  const activeId = systemSettings?.activeStorageId;
+  tbody.innerHTML = profiles.map(profile => {
+    const descriptionLines = [];
+    if (profile.description) {
+      descriptionLines.push(`<p class="text-xs text-gray-400">${profile.description}</p>`);
+    }
+    if (profile.type === 'google-sheet' && profile.config?.apiUrl) {
+      const shortUrl = profile.config.apiUrl.length > 40 ? `${profile.config.apiUrl.slice(0, 40)}…` : profile.config.apiUrl;
+      descriptionLines.push(`<p class="text-xs text-blue-300 break-all">URL: ${shortUrl}</p>`);
+    }
+    if (!descriptionLines.length) {
+      descriptionLines.push('<p class="text-xs text-gray-500">-</p>');
+    }
+    return `
+      <tr class="border-b border-gray-700 hover:bg-gray-700/50 transition-colors">
+        <td class="py-3 px-3">
+          <input type="radio" name="storage-active-radio" value="${profile.id}" ${profile.id === activeId ? 'checked' : ''} class="text-amber-500 focus:ring-amber-500">
+        </td>
+        <td class="py-3 px-3">
+          <p class="font-semibold text-gray-100">${profile.name || '-'}</p>
+          ${descriptionLines.join('')}
+        </td>
+        <td class="py-3 px-3">${getStorageTypeLabel(profile.type)}</td>
+        <td class="py-3 px-3">${formatStorageTimestamp(profile.lastSynced)}</td>
+        <td class="py-3 px-3 text-center">
+          <button type="button" class="text-red-400 hover:text-red-200 text-sm font-medium" data-delete-storage="${profile.id}">ลบ</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function handleStorageFormSubmit(event) {
+  if (event) {
+    event.preventDefault();
+  }
+  if (!systemSettings) return;
+  ensureStorageDefaults(systemSettings);
+  const name = document.getElementById('storage-name')?.value.trim();
+  const type = document.getElementById('storage-type')?.value || 'local';
+  const description = document.getElementById('storage-description')?.value.trim();
+  if (!name) {
+    showToast('กรุณาตั้งชื่อชุดข้อมูล', 'warning');
+    return;
+  }
+  const config = {};
+  if (type === 'google-sheet') {
+    const apiUrl = document.getElementById('storage-api-url')?.value.trim();
+    const apiKey = document.getElementById('storage-api-key')?.value.trim();
+    if (!apiUrl) {
+      showToast('กรุณาใส่ Script URL ของ Google Sheet', 'warning');
+      return false;
+    }
+    config.apiUrl = apiUrl;
+    if (apiKey) {
+      config.apiKey = apiKey;
+    }
+  }
+  const newProfile = {
+    id: `storage-${Date.now()}`,
+    name,
+    type,
+    description: description || '',
+    config,
+    lastSynced: null,
+    created_at: new Date().toISOString()
+  };
+  systemSettings.storageProfiles.push(newProfile);
+  if (!systemSettings.activeStorageId) {
+    systemSettings.activeStorageId = newProfile.id;
+  }
+  await persistSettingsChanges('เพิ่ม Storage แล้ว');
+  renderStorageProfiles();
+  if (event?.target) {
+    event.target.reset();
+  }
+  const apiUrlInput = document.getElementById('storage-api-url');
+  const apiKeyInput = document.getElementById('storage-api-key');
+  if (apiUrlInput) apiUrlInput.value = '';
+  if (apiKeyInput) apiKeyInput.value = '';
+  toggleStorageGoogleFields(type);
+  const urlInput = document.getElementById('storage-api-url');
+  const keyInput = document.getElementById('storage-api-key');
+  if (urlInput) urlInput.value = '';
+  if (keyInput) keyInput.value = '';
+  return false;
+}
+
+function handleStorageListClick(event) {
+  const deleteBtn = event.target.closest('button[data-delete-storage]');
+  if (deleteBtn) {
+    const profileId = deleteBtn.dataset.deleteStorage;
+    deleteStorageProfile(profileId);
+  }
+}
+
+function handleStorageActiveChange(event) {
+  const radio = event.target.closest('input[name="storage-active-radio"]');
+  if (radio && radio.checked) {
+    setActiveStorageProfile(radio.value);
+  }
+}
+
+async function setActiveStorageProfile(profileId) {
+  if (!systemSettings) return;
+  ensureStorageDefaults(systemSettings);
+  if (systemSettings.activeStorageId === profileId) return;
+  const exists = systemSettings.storageProfiles.some(profile => profile.id === profileId);
+  if (!exists) {
+    showToast('ไม่พบ storage ที่เลือก', 'error');
+    renderStorageProfiles();
+    return;
+  }
+  systemSettings.activeStorageId = profileId;
+  await persistSettingsChanges('เปลี่ยน Storage ที่ใช้งานแล้ว');
+  renderStorageProfiles();
+  syncExternalDataIfNeeded(true).catch(error => console.error('syncExternalDataIfNeeded error', error));
+}
+
+async function deleteStorageProfile(profileId) {
+  if (!systemSettings) return;
+  ensureStorageDefaults(systemSettings);
+  if (systemSettings.storageProfiles.length <= 1) {
+    showToast('ต้องมี storage อย่างน้อย 1 รายการ', 'warning');
+    return;
+  }
+  const confirmed = window.confirm('ต้องการลบ storage นี้หรือไม่?');
+  if (!confirmed) return;
+  systemSettings.storageProfiles = systemSettings.storageProfiles.filter(profile => profile.id !== profileId);
+  if (systemSettings.activeStorageId === profileId) {
+    systemSettings.activeStorageId = systemSettings.storageProfiles[0]?.id || null;
+  }
+  await persistSettingsChanges('ลบ Storage แล้ว');
+  renderStorageProfiles();
+}
+
+function getActiveStorageProfile() {
+  ensureStorageDefaults(systemSettings);
+  return systemSettings?.storageProfiles?.find(profile => profile.id === systemSettings.activeStorageId) || null;
+}
+
+function toggleStorageGoogleFields(selectedType) {
+  const container = document.getElementById('storage-google-fields');
+  if (!container) return;
+  const inputs = container.querySelectorAll('input');
+  const disabled = selectedType !== 'google-sheet';
+  container.classList.toggle('opacity-60', disabled);
+  container.classList.toggle('pointer-events-none', disabled);
+  inputs.forEach(input => {
+    input.disabled = disabled;
+    if (input.id === 'storage-api-url') {
+      input.required = !disabled;
+    }
+  });
+}
+
+function isGoogleSheetStorageActive() {
+  const profile = getActiveStorageProfile();
+  return Boolean(profile && profile.type === 'google-sheet' && profile.config?.apiUrl);
+}
+
+function getGoogleSheetConfig() {
+  if (!isGoogleSheetStorageActive()) return null;
+  const profile = getActiveStorageProfile();
+  return {
+    apiUrl: profile.config.apiUrl,
+    apiKey: profile.config.apiKey || null
+  };
+}
+
+async function googleSheetRequest(action, table, payload = {}, method = 'POST') {
+  const config = getGoogleSheetConfig();
+  if (!config) throw new Error('ยังไม่ได้ตั้งค่า Google Sheet');
+  const url = new URL(config.apiUrl);
+  url.searchParams.set('action', action);
+  url.searchParams.set('table', table);
+  const options = {
+    method,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
+  if (config.apiKey) {
+    options.headers['X-API-Key'] = config.apiKey;
+  }
+  if (method !== 'GET') {
+    options.body = JSON.stringify(payload);
+  }
+  const response = await fetch(url.toString(), options);
+  if (!response.ok) {
+    throw new Error(`Google Sheet status ${response.status}`);
+  }
+  const data = await response.json();
+  if (data && data.ok === false) {
+    throw new Error(data.message || 'Google Sheet error');
+  }
+  return data?.data ?? null;
+}
+
+function mapSheetProductToApp(row) {
+  return {
+    type: 'product',
+    sku: row?.sku || '',
+    product_name: row?.product_name || '',
+    brand: row?.brand || '',
+    color: row?.color || '',
+    size: row?.size || '',
+    category: row?.category || '',
+    quantity: parseInt(row?.quantity, 10) || 0,
+    unit: row?.unit || 'ชิ้น',
+    cost_price: parseFloat(row?.cost_price) || 0,
+    unit_price: parseFloat(row?.unit_price) || 0,
+    status: row?.status || '',
+    updated_at: row?.updated_at || new Date().toISOString(),
+    created_at: row?.updated_at || new Date().toISOString(),
+    __backendId: `gs-product-${row?.sku || Date.now()}`
+  };
+}
+
+function mapAppProductToSheet(product) {
+  return {
+    sku: product.sku || '',
+    product_name: product.product_name || '',
+    brand: product.brand || '',
+    color: product.color || '',
+    size: product.size || '',
+    category: product.category || '',
+    quantity: Number(product.quantity) || 0,
+    unit: product.unit || 'ชิ้น',
+    cost_price: Number(product.cost_price) || 0,
+    unit_price: Number(product.unit_price) || 0,
+    status: product.status || '',
+    updated_at: product.updated_at || new Date().toISOString()
+  };
+}
+
+async function syncProductsFromGoogleSheet(force = false) {
+  if (!isGoogleSheetStorageActive()) return;
+  if (googleSheetSyncState.firstSyncDone && !force) return;
+  try {
+    const data = await googleSheetRequest('list', 'products', {}, 'GET');
+    const normalized = Array.isArray(data) ? data.map(mapSheetProductToApp) : [];
+    allData = allData.filter(item => item.type !== 'product');
+    allData.push(...normalized);
+    googleSheetSyncState.firstSyncDone = true;
+    updateAllViews();
+    showToast('ซิงก์สินค้าจาก Google Sheet แล้ว', 'success');
+  } catch (error) {
+    console.error('syncProductsFromGoogleSheet failed', error);
+    showToast('เชื่อมต่อ Google Sheet ไม่สำเร็จ', 'error');
+  }
+}
+
+async function syncExternalDataIfNeeded(force = false) {
+  if (!isGoogleSheetStorageActive()) return;
+  await syncProductsFromGoogleSheet(force);
+}
+
+async function pushProductToGoogleSheet(product) {
+  if (!isGoogleSheetStorageActive()) return;
+  try {
+    await googleSheetRequest('save', 'products', mapAppProductToSheet(product));
+  } catch (error) {
+    console.error('pushProductToGoogleSheet failed', error);
+    showToast('เชื่อม Google Sheet ไม่สำเร็จ (สินค้า)', 'warning');
+  }
+}
+
+async function deleteProductOnGoogleSheet(sku) {
+  if (!isGoogleSheetStorageActive()) return;
+  try {
+    await googleSheetRequest('delete', 'products', { id: sku, sku });
+  } catch (error) {
+    console.error('deleteProductOnGoogleSheet failed', error);
+    showToast('ลบสินค้าใน Google Sheet ไม่สำเร็จ', 'warning');
+  }
 }
 
 function updateAllViews() {
@@ -2808,6 +3192,7 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
           if (!sdkAvailable && typeof updateAllViews === 'function') {
             updateAllViews();
           }
+          await pushProductToGoogleSheet(product);
         } else {
           showToast('✕ เกิดข้อผิดพลาดในการแก้ไขสินค้า', 'error');
         }
@@ -2891,6 +3276,7 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
         container.style.display = 'none';
         icon.textContent = '▶';
         icon.style.transform = 'rotate(-90deg)';
+        await pushProductToGoogleSheet(productData);
       } else {
         console.warn('window.dataSdk.create failed, using offline fallback');
         pushOfflineRecord();
@@ -2902,6 +3288,8 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
         icon.textContent = '▶';
         icon.style.transform = 'rotate(-90deg)';
       }
+
+      await pushProductToGoogleSheet(productData);
     }
   } catch (error) {
     console.error('Unexpected error in product form', error);
@@ -3270,8 +3658,22 @@ async function deleteProduct(backendId) {
     if (confirmBtn.textContent === '⚠️ ยืนยัน?') {
       confirmBtn.disabled = true;
       confirmBtn.textContent = '⏳ กำลังลบ...';
-      const result = await window.dataSdk.delete(product);
+      let result = { isOk: true };
+      const sdkAvailable = typeof window !== 'undefined' && window.dataSdk && typeof window.dataSdk.delete === 'function';
+      if (sdkAvailable) {
+        try {
+          result = await window.dataSdk.delete(product);
+        } catch (error) {
+          console.error('delete product failed', error);
+          result = { isOk: false };
+        }
+      }
       if (result.isOk) {
+        allData = allData.filter(item => item.__backendId !== backendId);
+        if (typeof updateAllViews === 'function') {
+          updateAllViews();
+        }
+        await deleteProductOnGoogleSheet(product.sku);
         showToast('✓ ลบสินค้าสำเร็จ', 'success');
       } else {
         showToast('✕ เกิดข้อผิดพลาดในการลบสินค้า', 'error');
