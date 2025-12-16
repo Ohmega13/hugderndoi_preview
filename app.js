@@ -196,6 +196,12 @@ function mergeSettingsData(storedSettings) {
   if (Array.isArray(storedSettings.accounts) && storedSettings.accounts.length) {
     merged.accounts = storedSettings.accounts;
   }
+  if (Array.isArray(storedSettings.storageProfiles) && storedSettings.storageProfiles.length) {
+    merged.storageProfiles = storedSettings.storageProfiles;
+  }
+  if (storedSettings.activeStorageId) {
+    merged.activeStorageId = storedSettings.activeStorageId;
+  }
   return merged;
 }
 
