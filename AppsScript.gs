@@ -89,21 +89,11 @@ function deleteRow(sheet, idValue) {
   return false;
 }
 
-function jsonResponse(payload, statusCode = 200) {
-  // In Google Apps Script's ContentService, you cannot set a custom HTTP status code.
-  // The 'statusCode' parameter is kept for compatibility with existing calls, but it has no effect.
-  // The script will always return a 200 OK status. Errors should be indicated in the JSON payload.
-  const output = ContentService
-    .createTextOutput(JSON.stringify(payload))
-    .setMimeType(ContentService.MimeType.JSON);
-  // Add CORS headers to allow requests from any origin.
-  output.addHeader('Access-Control-Allow-Origin', '*');
-  return output;
-}
-
+/**
+ * This function handles CORS preflight requests from the browser.
+ * It's required to allow the web app to make POST requests with a JSON content type.
+ */
 function doOptions(e) {
-  // This function handles CORS preflight requests from the browser.
-  // It's required to allow the web app to make POST requests with a JSON content type.
   const response = ContentService.createTextOutput();
   response.addHeader('Access-Control-Allow-Origin', '*');
   response.addHeader('Access-control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -115,6 +105,7 @@ function doOptions(e) {
  * ---------- API ----------
  */
 function doGet(e) {
+  let responseData;
   try {
     const table = e.parameter.table;
     const action = e.parameter.action || 'list';
@@ -123,23 +114,26 @@ function doGet(e) {
     const sheet = getSheet(table);
 
     if (action === 'list') {
-      return jsonResponse({ ok: true, data: mapRows(sheet, schema) });
-    }
-
-    if (action === 'get') {
+      responseData = { ok: true, data: mapRows(sheet, schema) };
+    } else if (action === 'get') {
       const id = e.parameter.id;
       const rows = mapRows(sheet, schema);
       const found = rows.find(row => row[schema[0]] === id);
-      return jsonResponse({ ok: true, data: found || null });
+      responseData = { ok: true, data: found || null };
+    } else {
+      responseData = { ok: false, message: 'action ไม่ถูกต้อง' };
     }
-
-    return jsonResponse({ ok: false, message: 'action ไม่ถูกต้อง' }, 400);
   } catch (error) {
-    return jsonResponse({ ok: false, message: error.message }, 500);
+    responseData = { ok: false, message: error.message };
   }
+  
+  return ContentService.createTextOutput(JSON.stringify(responseData))
+    .setMimeType(ContentService.MimeType.JSON)
+    .addHeader('Access-Control-Allow-Origin', '*');
 }
 
 function doPost(e) {
+  let responseData;
   try {
     const payload = JSON.parse(e.postData.contents || '{}');
 
@@ -147,14 +141,17 @@ function doPost(e) {
       try {
         const ss = SpreadsheetApp.getActiveSpreadsheet();
         const sheetName = ss.getName();
-        return jsonResponse({ ok: true, message: `เชื่อมต่อสำเร็จกับ "${sheetName}"` });
+        responseData = { ok: true, message: `เชื่อมต่อสำเร็จกับ "${sheetName}"` };
       } catch (error) {
-        return jsonResponse({ ok: false, message: `เชื่อมต่อไม่สำเร็จ: ${error.message}` }, 500);
+        responseData = { ok: false, message: `เชื่อมต่อไม่สำเร็จ: ${error.message}` };
       }
+      return ContentService.createTextOutput(JSON.stringify(responseData))
+          .setMimeType(ContentService.MimeType.JSON)
+          .addHeader('Access-Control-Allow-Origin', '*');
     }
 
     const table = e.parameter.table || payload.table;
-    const action = payload.action || e.parameter.action || 'save';
+    const action = payload.action || 'save';
     const schema = TABLE_SCHEMAS[table];
     if (!schema) throw new Error('ไม่รู้จักตาราง');
     const sheet = getSheet(table);
@@ -162,23 +159,29 @@ function doPost(e) {
 
     if (action === 'save') {
       payload.updated_at = new Date().toISOString();
+      // If it is a new entry (no ID) and schema has 'created_at', set it.
+      if (!payload[idField] && schema.includes('created_at')) {
+        payload.created_at = payload.updated_at;
+      }
       const row = upsertRow(sheet, schema, payload, idField);
       const savedData = {};
       schema.forEach((key, index) => {
         savedData[key] = row[index];
       });
-      return jsonResponse({ ok: true, data: savedData });
-    }
-
-    if (action === 'delete') {
+      responseData = { ok: true, data: savedData };
+    } else if (action === 'delete') {
       const id = payload.id || e.parameter.id || payload[idField];
       if (!id) throw new Error('ต้องระบุ id');
       const deleted = deleteRow(sheet, id);
-      return jsonResponse({ ok: deleted, message: deleted ? 'ลบแล้ว' : 'ไม่พบข้อมูล' });
+      responseData = { ok: deleted, message: deleted ? 'ลบแล้ว' : 'ไม่พบข้อมูล' };
+    } else {
+      responseData = { ok: false, message: 'action ไม่ถูกต้อง' };
     }
-
-    return jsonResponse({ ok: false, message: 'action ไม่ถูกต้อง' }, 400);
   } catch (error) {
-    return jsonResponse({ ok: false, message: `[doPost Error] ${error.message}` }, 500);
+    responseData = { ok: false, message: `[doPost Error] ${error.message}` };
   }
+  
+  return ContentService.createTextOutput(JSON.stringify(responseData))
+    .setMimeType(ContentService.MimeType.JSON)
+    .addHeader('Access-Control-Allow-Origin', '*');
 }
