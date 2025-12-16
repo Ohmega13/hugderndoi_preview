@@ -950,6 +950,7 @@ async function testGoogleSheetConnection(apiUrl, apiKey = null) {
 
   statusEl.textContent = 'กำลังตรวจสอบ...';
   statusEl.className = 'text-xs text-yellow-400 mt-1 h-4';
+  lastConnectionTest = { url: apiUrl, success: false };
 
   try {
     const url = new URL(apiUrl);
@@ -975,6 +976,7 @@ async function testGoogleSheetConnection(apiUrl, apiKey = null) {
     statusEl.textContent = data.message || 'เชื่อมต่อสำเร็จ!';
     statusEl.className = 'text-xs text-green-400 mt-1 h-4';
     showToast('การเชื่อมต่อสำเร็จ', 'success');
+    lastConnectionTest.success = true;
     return true;
   } catch (error) {
     const errorMessage = error.message || 'การเชื่อมต่อล้มเหลว. โปรดตรวจสอบ URL, CORS, หรือการอนุญาตของ Script';
