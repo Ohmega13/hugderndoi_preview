@@ -90,18 +90,6 @@ function deleteRow(sheet, idValue) {
 }
 
 /**
- * This function handles CORS preflight requests from the browser.
- * It's required to allow the web app to make POST requests with a JSON content type.
- */
-function doOptions(e) {
-  const response = ContentService.createTextOutput();
-  response.addHeader('Access-Control-Allow-Origin', '*');
-  response.addHeader('Access-control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.addHeader('Access-Control-Allow-Headers', 'Content-Type');
-  return response;
-}
-
-/**
  * ---------- API ----------
  */
 function doGet(e) {
@@ -127,9 +115,9 @@ function doGet(e) {
     responseData = { ok: false, message: error.message };
   }
   
-  return ContentService.createTextOutput(JSON.stringify(responseData))
-    .setMimeType(ContentService.MimeType.JSON)
-    .addHeader('Access-Control-Allow-Origin', '*');
+  var output = ContentService.createTextOutput(JSON.stringify(responseData));
+  output.setMimeType(ContentService.MimeType.JSON);
+  return output;
 }
 
 function doPost(e) {
@@ -146,8 +134,7 @@ function doPost(e) {
         responseData = { ok: false, message: `เชื่อมต่อไม่สำเร็จ: ${error.message}` };
       }
       return ContentService.createTextOutput(JSON.stringify(responseData))
-          .setMimeType(ContentService.MimeType.JSON)
-          .addHeader('Access-Control-Allow-Origin', '*');
+          .setMimeType(ContentService.MimeType.JSON);
     }
 
     const table = e.parameter.table || payload.table;
@@ -181,7 +168,7 @@ function doPost(e) {
     responseData = { ok: false, message: `[doPost Error] ${error.message}` };
   }
   
-  return ContentService.createTextOutput(JSON.stringify(responseData))
-    .setMimeType(ContentService.MimeType.JSON)
-    .addHeader('Access-Control-Allow-Origin', '*');
+  var output = ContentService.createTextOutput(JSON.stringify(responseData));
+  output.setMimeType(ContentService.MimeType.JSON);
+  return output;
 }

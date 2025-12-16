@@ -1689,6 +1689,30 @@ async function deleteProductOnGoogleSheet(sku) {
   }
 }
 
+function mapAppCustomerToSheet(customer) {
+  return {
+    customer_id: getCustomerIdentifier(customer) || '',
+    name: customer.name || '',
+    phone: customer.phone || '',
+    email: customer.email || '',
+    address: customer.address || '',
+    note: customer.note || '',
+    last_order_at: customer.last_order_at || '',
+    updated_at: customer.updated_at || new Date().toISOString(),
+  };
+}
+
+async function pushCustomerToGoogleSheet(customer) {
+  if (!isGoogleSheetStorageActive()) return;
+  try {
+    await googleSheetRequest('save', 'customers', mapAppCustomerToSheet(customer));
+    showToast('ซิงค์ข้อมูลลูกค้าไป Google Sheet แล้ว', 'success');
+  } catch (error) {
+    console.error('pushCustomerToGoogleSheet failed', error);
+    showToast('เชื่อม Google Sheet ไม่สำเร็จ (ลูกค้า)', 'warning');
+  }
+}
+
 function updateAllViews() {
   updateDashboard();
   updateProductsList();
@@ -4030,6 +4054,7 @@ if (customerForm) {
         showToast('บันทึกข้อมูลลูกค้าแล้ว', 'success');
         resetCustomerForm();
         updateCustomerUI();
+        pushCustomerToGoogleSheet(target);
       } else {
         showToast('ไม่สามารถบันทึกข้อมูลลูกค้าได้', 'error');
       }
@@ -4049,6 +4074,7 @@ if (customerForm) {
         showToast('เพิ่มลูกค้าใหม่สำเร็จ', 'success');
         resetCustomerForm();
         updateCustomerUI();
+        pushCustomerToGoogleSheet(newCustomer);
       } else {
         showToast('ไม่สามารถเพิ่มลูกค้าใหม่ได้', 'error');
       }
