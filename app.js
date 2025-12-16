@@ -1666,6 +1666,7 @@ async function syncProductsFromGoogleSheet(force = false) {
 async function syncExternalDataIfNeeded(force = false) {
   if (!isGoogleSheetStorageActive()) return;
   await syncProductsFromGoogleSheet(force);
+  await syncCustomersFromGoogleSheet(force);
 }
 
 async function pushProductToGoogleSheet(product) {
@@ -1689,6 +1690,22 @@ async function deleteProductOnGoogleSheet(sku) {
   }
 }
 
+function mapSheetCustomerToApp(row) {
+  return {
+    type: 'customer',
+    id: row?.customer_id || `gs-cust-${Date.now()}`,
+    name: row?.name || '',
+    phone: row?.phone || '',
+    email: row?.email || '',
+    address: row?.address || '',
+    note: row?.note || '',
+    last_order_at: row?.last_order_at || null,
+    created_at: row?.updated_at || new Date().toISOString(),
+    updated_at: row?.updated_at || new Date().toISOString(),
+    __backendId: `gs-cust-${row?.customer_id}`
+  };
+}
+
 function mapAppCustomerToSheet(customer) {
   return {
     customer_id: getCustomerIdentifier(customer) || '',
@@ -1710,6 +1727,24 @@ async function pushCustomerToGoogleSheet(customer) {
   } catch (error) {
     console.error('pushCustomerToGoogleSheet failed', error);
     showToast('เชื่อม Google Sheet ไม่สำเร็จ (ลูกค้า)', 'warning');
+  }
+}
+
+async function syncCustomersFromGoogleSheet(force = false) {
+  if (!isGoogleSheetStorageActive()) return;
+
+  try {
+    const data = await googleSheetRequest('list', 'customers', {}, 'GET');
+    if (Array.isArray(data)) {
+      const normalized = data.map(mapSheetCustomerToApp);
+      // Remove existing customer data and add fresh data
+      allData = allData.filter(item => item.type !== 'customer');
+      allData.push(...normalized);
+      updateCustomerUI();
+    }
+  } catch (error) {
+    console.error('syncCustomersFromGoogleSheet failed', error);
+    showToast('เชื่อมต่อ Google Sheet ไม่สำเร็จ (ลูกค้า)', 'error');
   }
 }
 
