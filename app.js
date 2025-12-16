@@ -285,6 +285,11 @@ function canAccessTab(tabId) {
 
 function activateTab(tabName) {
   if (!tabName) return;
+  try {
+    localStorage.setItem('currentPage', tabName);
+  } catch (e) {
+    console.warn('Failed to save current page state', e);
+  }
   const buttons = document.querySelectorAll('.tab-btn');
   buttons.forEach(b => {
     b.classList.remove('border-amber-500', 'text-amber-400');
@@ -368,7 +373,9 @@ function handleLoginSuccess(user, options = {}) {
   if (loginScreen) loginScreen.classList.add('hidden');
   if (appShell) appShell.classList.remove('hidden');
   updateCurrentUserUI();
-  enforceTabPermissions();
+  if (!options?.skipPermissionEnforcement) {
+    enforceTabPermissions();
+  }
   persistUserSession();
   if (!options?.silent) {
     showToast(`ยินดีต้อนรับ ${currentUser.displayName}`, 'success');
@@ -387,6 +394,7 @@ function resetToLogin() {
   if (error) error.classList.add('hidden');
   try {
     localStorage.removeItem(USER_SESSION_KEY);
+    localStorage.removeItem('currentPage');
   } catch (error) {
     console.warn('remove session failed', error);
   }
@@ -396,24 +404,39 @@ function restoreUserSession() {
   try {
     const stored = localStorage.getItem(USER_SESSION_KEY);
     if (!stored) return;
+
     const parsed = JSON.parse(stored);
     if (!parsed?.username) return;
+
     const { username, displayName, roleLabel, permissions } = parsed;
     const account = getAccounts().find(acc => acc.username === username);
+
+    const performLogin = (user) => {
+      handleLoginSuccess(user, { silent: true, skipPermissionEnforcement: true });
+      enforceTabPermissions();
+      const savedPage = localStorage.getItem('currentPage');
+      if (savedPage && canAccessTab(savedPage)) {
+        activateTab(savedPage);
+      } else {
+        ensureActiveAccessibleTab();
+      }
+    };
+
     if (account) {
-      handleLoginSuccess(account, { silent: true });
-      return;
+      performLogin(account);
+    } else {
+      performLogin({
+        username,
+        displayName: displayName || username,
+        roleLabel: roleLabel || 'ผู้ใช้',
+        permissions: permissions || availablePermissionTabs.map(tab => tab.id)
+      });
     }
-    handleLoginSuccess({
-      username,
-      displayName: displayName || username,
-      roleLabel: roleLabel || 'ผู้ใช้',
-      permissions: permissions || availablePermissionTabs.map(tab => tab.id)
-    }, { silent: true });
   } catch (error) {
     console.warn('restoreUserSession failed', error);
     try {
       localStorage.removeItem(USER_SESSION_KEY);
+      localStorage.removeItem('currentPage');
     } catch (e) {
       console.warn('cleanup session failed', e);
     }
@@ -469,8 +492,6 @@ async function initApp() {
     bootstrapOfflineMode();
     return;
   }
-
-  restoreUserSession();
 
   if (window.elementSdk) {
     window.elementSdk.init({
@@ -4598,9 +4619,8 @@ document.getElementById('add-stock-form').addEventListener('submit', async (e) =
   btn.textContent = originalText;
 });
 
-initApp();
-
 document.addEventListener('DOMContentLoaded', () => {
+  initApp();
   renderDropdownTypeOptions();
   updateDropdownEditor();
   updateProductSelects();
