@@ -90,25 +90,25 @@ function deleteRow(sheet, idValue) {
 }
 
 function jsonResponse(payload, statusCode = 200) {
-  const response = ContentService
+  // In Google Apps Script's ContentService, you cannot set a custom HTTP status code.
+  // The 'statusCode' parameter is kept for compatibility with existing calls, but it has no effect.
+  // The script will always return a 200 OK status. Errors should be indicated in the JSON payload.
+  const output = ContentService
     .createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
-
-  // Add CORS headers
-  response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  return response;
+  // Add CORS headers to allow requests from any origin.
+  output.addHeader('Access-Control-Allow-Origin', '*');
+  return output;
 }
 
 function doOptions(e) {
-  return ContentService
-    .createTextOutput()
-    .setMimeType(ContentService.MimeType.TEXT)
-    .setHeader('Access-Control-Allow-Origin', '*')
-    .setHeader('Access-control-allow-methods', 'GET, POST, OPTIONS')
-    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // This function handles CORS preflight requests from the browser.
+  // It's required to allow the web app to make POST requests with a JSON content type.
+  const response = ContentService.createTextOutput();
+  response.addHeader('Access-Control-Allow-Origin', '*');
+  response.addHeader('Access-control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.addHeader('Access-Control-Allow-Headers', 'Content-Type');
+  return response;
 }
 
 /**
