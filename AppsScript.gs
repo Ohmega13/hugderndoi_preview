@@ -141,12 +141,23 @@ function doGet(e) {
 
 function doPost(e) {
   try {
+    const payload = JSON.parse(e.postData.contents || '{}');
+
+    if (payload.action === 'testConnection') {
+      try {
+        const ss = SpreadsheetApp.getActiveSpreadsheet();
+        const sheetName = ss.getName();
+        return jsonResponse({ ok: true, message: `เชื่อมต่อสำเร็จกับ "${sheetName}"` });
+      } catch (error) {
+        return jsonResponse({ ok: false, message: `เชื่อมต่อไม่สำเร็จ: ${error.message}` }, 500);
+      }
+    }
+
     const table = e.parameter.table;
     const action = e.parameter.action || 'save';
     const schema = TABLE_SCHEMAS[table];
     if (!schema) throw new Error('ไม่รู้จักตาราง');
     const sheet = getSheet(table);
-    const payload = JSON.parse(e.postData.contents || '{}');
     const idField = schema[0];
 
     if (action === 'save') {

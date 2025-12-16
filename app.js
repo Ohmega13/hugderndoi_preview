@@ -19,6 +19,7 @@ let googleSheetSyncState = {
   firstSyncDone: false
 };
 const USER_SESSION_KEY = 'hugderndoi-user-session';
+let lastConnectionTest = { url: '', success: false };
 
 function cloneDefaultAccounts() {
   return defaultUsers.map((user, index) => ({
