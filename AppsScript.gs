@@ -153,8 +153,8 @@ function doPost(e) {
       }
     }
 
-    const table = e.parameter.table;
-    const action = e.parameter.action || 'save';
+    const table = e.parameter.table || payload.table;
+    const action = payload.action || e.parameter.action || 'save';
     const schema = TABLE_SCHEMAS[table];
     if (!schema) throw new Error('ไม่รู้จักตาราง');
     const sheet = getSheet(table);
@@ -163,11 +163,15 @@ function doPost(e) {
     if (action === 'save') {
       payload.updated_at = new Date().toISOString();
       const row = upsertRow(sheet, schema, payload, idField);
-      return jsonResponse({ ok: true, data: row });
+      const savedData = {};
+      schema.forEach((key, index) => {
+        savedData[key] = row[index];
+      });
+      return jsonResponse({ ok: true, data: savedData });
     }
 
     if (action === 'delete') {
-      const id = e.parameter.id || payload[idField];
+      const id = payload.id || e.parameter.id || payload[idField];
       if (!id) throw new Error('ต้องระบุ id');
       const deleted = deleteRow(sheet, id);
       return jsonResponse({ ok: deleted, message: deleted ? 'ลบแล้ว' : 'ไม่พบข้อมูล' });
@@ -175,6 +179,6 @@ function doPost(e) {
 
     return jsonResponse({ ok: false, message: 'action ไม่ถูกต้อง' }, 400);
   } catch (error) {
-    return jsonResponse({ ok: false, message: error.message }, 500);
+    return jsonResponse({ ok: false, message: `[doPost Error] ${error.message}` }, 500);
   }
 }

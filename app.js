@@ -926,7 +926,63 @@ function initializeAdminEventHandlers() {
     });
   }
 
+  const testConnectionBtn = document.getElementById('test-connection-btn');
+  if (testConnectionBtn) {
+    testConnectionBtn.addEventListener('click', async () => {
+      const apiUrl = document.getElementById('storage-api-url')?.value.trim();
+      if (!apiUrl) {
+        showToast('กรุณาใส่ Script URL ก่อน', 'warning');
+        return;
+      }
+      await testGoogleSheetConnection(apiUrl);
+    });
+  }
+
   adminUIInitialized = true;
+}
+
+async function testGoogleSheetConnection(apiUrl, apiKey = null) {
+  const statusEl = document.getElementById('connection-status');
+  if (!statusEl) {
+    console.error('Connection status element not found');
+    return false;
+  }
+
+  statusEl.textContent = 'กำลังตรวจสอบ...';
+  statusEl.className = 'text-xs text-yellow-400 mt-1 h-4';
+
+  try {
+    const url = new URL(apiUrl);
+    const options = {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'testConnection' }),
+      mode: 'cors',
+    };
+
+    const response = await fetch(url.toString(), options);
+
+    if (!response.ok) {
+      throw new Error(`การเชื่อมต่อมีปัญหา (HTTP ${response.status})`);
+    }
+
+    const data = await response.json();
+
+    if (data.ok === false) {
+      throw new Error(data.message || 'Apps Script ส่งกลับมาว่าผิดพลาด');
+    }
+
+    statusEl.textContent = data.message || 'เชื่อมต่อสำเร็จ!';
+    statusEl.className = 'text-xs text-green-400 mt-1 h-4';
+    showToast('การเชื่อมต่อสำเร็จ', 'success');
+    return true;
+  } catch (error) {
+    const errorMessage = error.message || 'การเชื่อมต่อล้มเหลว. โปรดตรวจสอบ URL, CORS, หรือการอนุญาตของ Script';
+    statusEl.textContent = errorMessage;
+    statusEl.className = 'text-xs text-red-400 mt-1 h-4';
+    showToast(errorMessage, 'error');
+    return false;
+  }
 }
 
 function renderDropdownTypeOptions() {
@@ -1340,6 +1396,13 @@ async function handleStorageFormSubmit(event) {
       showToast('กรุณาใส่ Script URL ของ Google Sheet', 'warning');
       return false;
     }
+
+    const isConnected = await testGoogleSheetConnection(apiUrl, apiKey);
+    if (!isConnected) {
+      showToast('การเชื่อมต่อล้มเหลว โปรดตรวจสอบ URL และลองอีกครั้ง', 'warning');
+      return false;
+    }
+
     config.apiUrl = apiUrl;
     if (apiKey) {
       config.apiKey = apiKey;
@@ -1460,29 +1523,49 @@ function getGoogleSheetConfig() {
 async function googleSheetRequest(action, table, payload = {}, method = 'POST') {
   const config = getGoogleSheetConfig();
   if (!config) throw new Error('ยังไม่ได้ตั้งค่า Google Sheet');
+  
   const url = new URL(config.apiUrl);
-  url.searchParams.set('action', action);
-  url.searchParams.set('table', table);
+  
+  // Build query parameters for GET requests
+  if (method === 'GET') {
+    url.searchParams.set('action', action);
+    url.searchParams.set('table', table);
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        url.searchParams.set(key, value);
+      }
+    });
+  }
+
   const options = {
     method,
-    headers: {
-      'Content-Type': 'application/json'
-    }
+    headers: {},
+    mode: 'cors',
   };
+
+  if (method !== 'GET') {
+    // For POST, send parameters in a plain text body
+    const postPayload = { ...payload, action, table };
+    options.body = JSON.stringify(postPayload);
+    options.headers['Content-Type'] = 'text/plain;charset=utf-8';
+  }
+
   if (config.apiKey) {
     options.headers['X-API-Key'] = config.apiKey;
   }
-  if (method !== 'GET') {
-    options.body = JSON.stringify(payload);
-  }
+  
   const response = await fetch(url.toString(), options);
+  
   if (!response.ok) {
     throw new Error(`Google Sheet status ${response.status}`);
   }
+  
   const data = await response.json();
+  
   if (data && data.ok === false) {
     throw new Error(data.message || 'Google Sheet error');
   }
+  
   return data?.data ?? null;
 }
 
@@ -1558,7 +1641,8 @@ async function pushProductToGoogleSheet(product) {
 async function deleteProductOnGoogleSheet(sku) {
   if (!isGoogleSheetStorageActive()) return;
   try {
-    await googleSheetRequest('delete', 'products', { id: sku, sku });
+    const payload = { id: sku, sku, action: 'delete', table: 'products' };
+    await googleSheetRequest('delete', 'products', payload, 'POST');
   } catch (error) {
     console.error('deleteProductOnGoogleSheet failed', error);
     showToast('ลบสินค้าใน Google Sheet ไม่สำเร็จ', 'warning');
