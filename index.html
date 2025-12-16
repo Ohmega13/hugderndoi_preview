@@ -1067,8 +1067,11 @@
          </p>
          <div>
           <label for="storage-api-url" class="block text-sm font-medium text-gray-300 mb-1">Script URL*</label>
-          <input type="url" id="storage-api-url" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm focus:ring-amber-500 focus:border-amber-500" placeholder="https://script.google.com/macros/s/.../exec">
-          <p class="text-xs text-gray-400 mt-1">นำ URL จาก Apps Script Web App มาใส่เพื่อให้เว็บเชื่อมต่อกับ Google Sheet</p>
+          <div class="flex gap-2">
+           <input type="url" id="storage-api-url" class="flex-grow w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm focus:ring-amber-500 focus:border-amber-500" placeholder="https://script.google.com/macros/s/.../exec">
+           <button type="button" id="test-connection-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors">ทดสอบ</button>
+          </div>
+          <p id="connection-status" class="text-xs text-gray-400 mt-1 h-4">นำ URL จาก Apps Script Web App มาใส่เพื่อให้เว็บเชื่อมต่อกับ Google Sheet</p>
          </div>
          <div>
           <label for="storage-api-key" class="block text-sm font-medium text-gray-300 mb-1">API Key (ถ้ามี)</label>
