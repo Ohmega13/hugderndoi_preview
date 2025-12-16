@@ -1,3 +1,24 @@
+const SETTINGS_STORAGE_KEY = 'hugderndoi-system-settings';
+
+function loadSettingsFromLocalStorage() {
+  try {
+    const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error('Failed to load settings from localStorage', e);
+  }
+  return null;
+}
+
+function saveSettingsToLocalStorage(settings) {
+  try {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch (e) {
+    console.error('Failed to save settings to localStorage', e);
+  }
+}
 let allData = [];
 const defaultConfig = {
   company_name: 'ฮักเดินดอย',
@@ -468,7 +489,10 @@ const dataHandler = {
 };
 
 function bootstrapOfflineMode() {
-  if (!systemSettings) {
+  const storedSettings = loadSettingsFromLocalStorage();
+  if (storedSettings) {
+    systemSettings = mergeSettingsData(storedSettings);
+  } else {
     systemSettings = cloneDefaultSettings();
   }
   ensureDropdownDefaults(systemSettings);
@@ -571,27 +595,33 @@ async function initApp() {
 async function initializeSettings() {
   try {
     settingsRecord = allData.find(item => item.type === 'settings') || null;
-    if (!settingsRecord) {
+    const storedSettings = loadSettingsFromLocalStorage();
+
+    if (settingsRecord) {
+      systemSettings = mergeSettingsData(settingsRecord.settings);
+      // If local storage is somehow newer, consider merging. For now, sdk is king.
+    } else if (storedSettings) {
+      systemSettings = mergeSettingsData(storedSettings);
+    } else {
       systemSettings = cloneDefaultSettings();
-      ensureDropdownDefaults(systemSettings);
-      ensureAccountDefaults(systemSettings);
-      ensureStorageDefaults(systemSettings);
       const payload = {
         type: 'settings',
         settings: systemSettings,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      const createResult = await window.dataSdk.create(payload);
-      if (!createResult.isOk) {
-        console.error('ไม่สามารถสร้างข้อมูลการตั้งค่าเริ่มต้นได้');
+      if (window.dataSdk && typeof window.dataSdk.create === 'function') {
+        const createResult = await window.dataSdk.create(payload);
+        if (!createResult.isOk) {
+          console.error('ไม่สามารถสร้างข้อมูลการตั้งค่าเริ่มต้นได้');
+        }
       }
-    } else {
-      systemSettings = mergeSettingsData(settingsRecord.settings);
-      ensureDropdownDefaults(systemSettings);
-      ensureAccountDefaults(systemSettings);
-      ensureStorageDefaults(systemSettings);
     }
+
+    ensureDropdownDefaults(systemSettings);
+    ensureAccountDefaults(systemSettings);
+    ensureStorageDefaults(systemSettings);
+    
     applySettingsToUI();
     renderDropdownTypeOptions();
     updateDropdownEditor();
@@ -607,6 +637,9 @@ async function initializeSettings() {
 
 async function persistSettingsChanges(successMessage) {
   if (!systemSettings) return;
+
+  saveSettingsToLocalStorage(systemSettings);
+
   const payload = JSON.parse(JSON.stringify(systemSettings));
   const sdkAvailable = typeof window !== 'undefined' && window.dataSdk && typeof window.dataSdk.create === 'function';
 
@@ -1390,19 +1423,25 @@ async function handleStorageFormSubmit(event) {
     showToast('กรุณาตั้งชื่อชุดข้อมูล', 'warning');
     return;
   }
+
+  if (systemSettings.storageProfiles.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+    showToast('มีชื่อ Storage นี้อยู่แล้ว', 'warning');
+    return;
+  }
+
   const config = {};
   if (type === 'google-sheet') {
     const apiUrl = document.getElementById('storage-api-url')?.value.trim();
     const apiKey = document.getElementById('storage-api-key')?.value.trim();
     if (!apiUrl) {
       showToast('กรุณาใส่ Script URL ของ Google Sheet', 'warning');
-      return false;
+      return;
     }
 
     const isConnected = await testGoogleSheetConnection(apiUrl, apiKey);
     if (!isConnected) {
       showToast('การเชื่อมต่อล้มเหลว โปรดตรวจสอบ URL และลองอีกครั้ง', 'warning');
-      return false;
+      return;
     }
 
     config.apiUrl = apiUrl;
@@ -1425,19 +1464,12 @@ async function handleStorageFormSubmit(event) {
   }
   await persistSettingsChanges('เพิ่ม Storage แล้ว');
   renderStorageProfiles();
-  if (event?.target) {
-    event.target.reset();
-  }
-  const apiUrlInput = document.getElementById('storage-api-url');
-  const apiKeyInput = document.getElementById('storage-api-key');
-  if (apiUrlInput) apiUrlInput.value = '';
-  if (apiKeyInput) apiKeyInput.value = '';
-  toggleStorageGoogleFields(type);
-  const urlInput = document.getElementById('storage-api-url');
-  const keyInput = document.getElementById('storage-api-key');
-  if (urlInput) urlInput.value = '';
-  if (keyInput) keyInput.value = '';
-  return false;
+  
+  const form = document.getElementById('storage-form');
+  if(form) form.reset();
+  
+  toggleStorageGoogleFields('local');
+  document.getElementById('storage-type').value = 'local';
 }
 
 function handleStorageListClick(event) {
