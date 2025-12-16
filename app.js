@@ -3848,20 +3848,41 @@ async function adjustStock(backendId, change) {
   const product = allData.find(p => p.__backendId === backendId);
   if (!product) return;
 
+  const oldQuantity = product.quantity;
   const newQuantity = product.quantity + change;
+
   if (newQuantity < 0) {
     showToast('✕ จำนวนสินค้าไม่สามารถติดลบได้', 'error');
     return;
   }
 
+  // Optimistically update the UI first
   product.quantity = newQuantity;
   product.updated_at = new Date().toISOString();
-  
+  updateAllViews(); // Update UI immediately
+
+  // If Google Sheet is active, push to it
+  if (isGoogleSheetStorageActive()) {
+    try {
+      await pushProductToGoogleSheet(product);
+      showToast('✓ อัพเดทสต๊อกใน Google Sheet แล้ว', 'success');
+    } catch (e) {
+      // Revert quantity and UI if push fails
+      product.quantity = oldQuantity;
+      updateAllViews();
+      showToast(`✕ อัพเดท Google Sheet ไม่สำเร็จ: ${e.message}`, 'error');
+    }
+    return;
+  }
+
+  // Fallback to original dataSdk logic if Google Sheet is not active
   const result = await window.dataSdk.update(product);
   if (result.isOk) {
-    await pushProductToGoogleSheet(product);
     showToast('✓ อัพเดทสต๊อกแล้ว', 'success');
   } else {
+    // Revert quantity and UI on failure
+    product.quantity = oldQuantity;
+    updateAllViews();
     showToast('✕ เกิดข้อผิดพลาดในการอัพเดทสต๊อก', 'error');
   }
 }
