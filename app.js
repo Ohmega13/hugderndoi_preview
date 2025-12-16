@@ -4350,7 +4350,7 @@ document.getElementById('clear-custom-date').addEventListener('click', function(
   updateFinance();
 });
 
-// ฟังก์ชันส่งออกรายงานการเงิน
+// ฟังก์ชันส่งออกรายงาน การเงิน
 document.getElementById('export-finance-btn').addEventListener('click', function() {
   const products = allData.filter(item => item.type === 'product');
   const periodFilter = document.getElementById('finance-period-filter')?.value || 'all';
