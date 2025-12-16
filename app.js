@@ -3858,7 +3858,10 @@ async function adjustStock(backendId, change) {
   product.updated_at = new Date().toISOString();
   
   const result = await window.dataSdk.update(product);
-  if (!result.isOk) {
+  if (result.isOk) {
+    await pushProductToGoogleSheet(product);
+    showToast('✓ อัพเดทสต๊อกแล้ว', 'success');
+  } else {
     showToast('✕ เกิดข้อผิดพลาดในการอัพเดทสต๊อก', 'error');
   }
 }
