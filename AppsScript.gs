@@ -60,9 +60,10 @@ function mapRows(sheet, schema) {
 function upsertRow(sheet, schema, payload, idField) {
   const values = sheet.getDataRange().getValues();
   let targetRow = -1;
+  const idFieldIndex = schema.indexOf(idField);
   if (idField && payload[idField]) {
     for (let i = 1; i < values.length; i++) {
-      if (values[i][0] === payload[idField]) {
+      if (values[i][idFieldIndex] === payload[idField]) {
         targetRow = i + 1;
         break;
       }
