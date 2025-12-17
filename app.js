@@ -3615,6 +3615,10 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
   
   const editId = document.getElementById('damaged-edit-id').value;
   const btn = document.getElementById('add-damaged-btn');
+  const sdk = typeof window !== 'undefined' ? window.dataSdk : null;
+  const canCreateSdk = sdk && typeof sdk.create === 'function';
+  const canUpdateSdk = sdk && typeof sdk.update === 'function';
+  const canDeleteSdk = sdk && typeof sdk.delete === 'function';
   
   if (!editId && allData.length >= 999) {
     showToast('ถึงขีดจำกัด 999 รายการแล้ว กรุณาลบรายการเก่าก่อน', 'error');
@@ -3648,7 +3652,13 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
         if (oldProduct) {
           oldProduct.quantity += oldQuantity;
           oldProduct.updated_at = new Date().toISOString();
-          await window.dataSdk.update(oldProduct);
+          if (canUpdateSdk) {
+            try {
+              await window.dataSdk.update(oldProduct);
+            } catch (error) {
+              console.error('update old product failed', error);
+            }
+          }
           await syncProductToGoogleSheet(oldProduct);
         }
         
@@ -3661,7 +3671,13 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
         
         product.quantity -= quantity;
         product.updated_at = new Date().toISOString();
-        await window.dataSdk.update(product);
+        if (canUpdateSdk) {
+          try {
+            await window.dataSdk.update(product);
+          } catch (error) {
+            console.error('update product failed', error);
+          }
+        }
         await syncProductToGoogleSheet(product);
       } else {
         const stockDiff = quantity - oldQuantity;
@@ -3674,7 +3690,13 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
         
         product.quantity -= stockDiff;
         product.updated_at = new Date().toISOString();
-        await window.dataSdk.update(product);
+        if (canUpdateSdk) {
+          try {
+            await window.dataSdk.update(product);
+          } catch (error) {
+            console.error('update product failed', error);
+          }
+        }
         await syncProductToGoogleSheet(product);
       }
 
@@ -3687,7 +3709,15 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
       damaged.unit_price = product.unit_price;
       damaged.updated_at = new Date().toISOString();
 
-      const result = await window.dataSdk.update(damaged);
+      let result = { isOk: true };
+      if (canUpdateSdk) {
+        try {
+          result = await window.dataSdk.update(damaged);
+        } catch (error) {
+          console.error('update damaged failed', error);
+          result = { isOk: false };
+        }
+      }
       
       if (result.isOk) {
         await pushDamagedToGoogleSheet(damaged);
@@ -3723,16 +3753,38 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
       unit_price: product.unit_price
     };
 
-    const createResult = await window.dataSdk.create(damagedData);
+    let createResult = { isOk: true };
+    if (canCreateSdk) {
+      try {
+        createResult = await window.dataSdk.create(damagedData);
+      } catch (error) {
+        console.error('create damaged failed', error);
+        createResult = { isOk: false };
+      }
+    } else {
+      damagedData.__backendId = damagedData.__backendId || `offline-damaged-${Date.now()}`;
+      allData.push(damagedData);
+    }
     
     if (createResult.isOk) {
       product.quantity -= quantity;
       product.updated_at = new Date().toISOString();
-      const updateResult = await window.dataSdk.update(product);
+      let updateResult = { isOk: true };
+      if (canUpdateSdk) {
+        try {
+          updateResult = await window.dataSdk.update(product);
+        } catch (error) {
+          console.error('update product failed', error);
+          updateResult = { isOk: false };
+        }
+      }
       
       if (updateResult.isOk) {
         await syncProductToGoogleSheet(product);
         await pushDamagedToGoogleSheet(damagedData);
+        if (!canCreateSdk && typeof updateAllViews === 'function') {
+          updateAllViews();
+        }
         showToast('✓ บันทึกสินค้าชำรุดสำเร็จ', 'success');
         e.target.reset();
       } else {
@@ -4076,6 +4128,9 @@ async function deleteOrder(backendId) {
 async function deleteDamaged(backendId) {
   const damaged = allData.find(d => d.__backendId === backendId);
   if (!damaged) return;
+  const sdk = typeof window !== 'undefined' ? window.dataSdk : null;
+  const canUpdateSdk = sdk && typeof sdk.update === 'function';
+  const canDeleteSdk = sdk && typeof sdk.delete === 'function';
 
   const confirmBtn = event.target;
   const originalText = confirmBtn.textContent;
@@ -4091,11 +4146,30 @@ async function deleteDamaged(backendId) {
       if (product) {
         product.quantity += damaged.quantity;
         product.updated_at = new Date().toISOString();
-        await window.dataSdk.update(product);
+        if (canUpdateSdk) {
+          try {
+            await window.dataSdk.update(product);
+          } catch (error) {
+            console.error('update product failed', error);
+          }
+        }
         await syncProductToGoogleSheet(product);
       }
       
-      const result = await window.dataSdk.delete(damaged);
+      let result = { isOk: true };
+      if (canDeleteSdk) {
+        try {
+          result = await window.dataSdk.delete(damaged);
+        } catch (error) {
+          console.error('delete damaged failed', error);
+          result = { isOk: false };
+        }
+      } else {
+        allData = allData.filter(item => item.__backendId !== backendId);
+        if (typeof updateAllViews === 'function') {
+          updateAllViews();
+        }
+      }
       if (result.isOk) {
         await deleteDamagedOnGoogleSheet(ensureDamageId(damaged));
         showToast('✓ ลบสินค้าชำรุดสำเร็จ', 'success');
