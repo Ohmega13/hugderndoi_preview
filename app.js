@@ -38,7 +38,8 @@ let activeCustomerHistoryId = null;
 let currentUser = null;
 let googleSheetSyncState = {
   firstSyncDone: false,
-  damagedFirstSyncDone: false
+  damagedFirstSyncDone: false,
+  ordersFirstSyncDone: false
 };
 const USER_SESSION_KEY = 'hugderndoi-user-session';
 let lastConnectionTest = { url: '', success: false };
@@ -1689,6 +1690,48 @@ function mapAppDamagedToSheet(damaged) {
   };
 }
 
+function mapSheetOrderToApp(row) {
+  return {
+    type: 'order',
+    order_id: row?.order_id || '',
+    customer_name: row?.customer_name || '',
+    customer_phone: row?.customer_phone || '',
+    customer_id: row?.customer_id || '',
+    product_name: row?.product_name || '',
+    sku: row?.sku || '',
+    quantity: parseInt(row?.quantity, 10) || 0,
+    shipping_address: row?.address || '',
+    shipping_cost: parseFloat(row?.shipping_fee) || 0,
+    status: row?.status || '',
+    tracking_number: row?.tracking || '',
+    courier: row?.carrier || '',
+    note: row?.note || '',
+    created_at: row?.created_at || new Date().toISOString(),
+    updated_at: row?.updated_at || row?.created_at || new Date().toISOString(),
+    __backendId: `gs-order-${row?.order_id || Date.now()}`
+  };
+}
+
+function mapAppOrderToSheet(order) {
+  return {
+    order_id: order.order_id || '',
+    customer_name: order.customer_name || '',
+    customer_phone: order.customer_phone || '',
+    address: order.shipping_address || order.address || '',
+    customer_id: order.customer_id || '',
+    sku: order.sku || '',
+    product_name: order.product_name || '',
+    quantity: Number(order.quantity) || 0,
+    shipping_fee: Number(order.shipping_cost) || 0,
+    status: order.status || '',
+    carrier: order.courier || '',
+    tracking: order.tracking_number || '',
+    note: order.note || '',
+    created_at: order.created_at || new Date().toISOString(),
+    updated_at: order.updated_at || new Date().toISOString()
+  };
+}
+
 async function syncProductsFromGoogleSheet(force = false) {
   if (!isGoogleSheetStorageActive()) return;
   if (googleSheetSyncState.firstSyncDone && !force) return;
@@ -1711,6 +1754,7 @@ async function syncExternalDataIfNeeded(force = false) {
   await syncProductsFromGoogleSheet(force);
   await syncCustomersFromGoogleSheet(force);
   await syncDamagedFromGoogleSheet(force);
+  await syncOrdersFromGoogleSheet(force);
 }
 
 async function pushProductToGoogleSheet(product) {
@@ -1780,6 +1824,41 @@ async function deleteDamagedOnGoogleSheet(damageId) {
     await googleSheetRequest('delete', 'damaged', { id: damageId, damage_id: damageId }, 'POST');
   } catch (error) {
     console.error('deleteDamagedOnGoogleSheet failed', error);
+  }
+}
+
+async function syncOrdersFromGoogleSheet(force = false) {
+  if (!isGoogleSheetStorageActive()) return;
+  if (googleSheetSyncState.ordersFirstSyncDone && !force) return;
+  try {
+    const data = await googleSheetRequest('list', 'orders', {}, 'GET');
+    const normalized = Array.isArray(data) ? data.map(mapSheetOrderToApp) : [];
+    allData = allData.filter(item => item.type !== 'order');
+    allData.push(...normalized);
+    googleSheetSyncState.ordersFirstSyncDone = true;
+    updateAllViews();
+  } catch (error) {
+    console.error('syncOrdersFromGoogleSheet failed', error);
+    showToast('เชื่อมต่อ Google Sheet (ออเดอร์) ไม่สำเร็จ', 'error');
+  }
+}
+
+async function pushOrderToGoogleSheet(order) {
+  if (!isGoogleSheetStorageActive()) return;
+  try {
+    await googleSheetRequest('save', 'orders', mapAppOrderToSheet(order));
+  } catch (error) {
+    console.error('pushOrderToGoogleSheet failed', error);
+    showToast('บันทึกออเดอร์ใน Google Sheet ไม่สำเร็จ', 'error');
+  }
+}
+
+async function deleteOrderOnGoogleSheet(orderId) {
+  if (!isGoogleSheetStorageActive() || !orderId) return;
+  try {
+    await googleSheetRequest('delete', 'orders', { id: orderId, order_id: orderId }, 'POST');
+  } catch (error) {
+    console.error('deleteOrderOnGoogleSheet failed', error);
   }
 }
 
@@ -3983,6 +4062,7 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
         if (!canUpdateSdk && typeof updateAllViews === 'function') {
           updateAllViews();
         }
+        await pushOrderToGoogleSheet(order);
       } else {
         showToast('✕ เกิดข้อผิดพลาดในการแก้ไขออเดอร์', 'error');
       }
@@ -4050,6 +4130,7 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
         if (!canCreateSdk && typeof updateAllViews === 'function') {
           updateAllViews();
         }
+        await pushOrderToGoogleSheet(orderData);
       } else {
         showToast('⚠️ สร้างออเดอร์สำเร็จ แต่ไม่สามารถอัพเดทสต๊อกได้', 'warning');
       }
@@ -4148,6 +4229,9 @@ async function deleteProduct(backendId) {
 async function deleteOrder(backendId) {
   const order = allData.find(o => o.__backendId === backendId);
   if (!order) return;
+  const sdk = typeof window !== 'undefined' ? window.dataSdk : null;
+  const canUpdateSdk = sdk && typeof sdk.update === 'function';
+  const canDeleteSdk = sdk && typeof sdk.delete === 'function';
 
   const confirmBtn = event.target;
   const originalText = confirmBtn.textContent;
@@ -4163,12 +4247,32 @@ async function deleteOrder(backendId) {
       if (product && order.status !== 'จัดส่งแล้ว') {
         product.quantity += order.quantity;
         product.updated_at = new Date().toISOString();
-        await window.dataSdk.update(product);
+        if (canUpdateSdk) {
+          try {
+            await window.dataSdk.update(product);
+          } catch (error) {
+            console.error('update product failed', error);
+          }
+        }
         await syncProductToGoogleSheet(product);
       }
       
-      const result = await window.dataSdk.delete(order);
+      let result = { isOk: true };
+      if (canDeleteSdk) {
+        try {
+          result = await window.dataSdk.delete(order);
+        } catch (error) {
+          console.error('delete order failed', error);
+          result = { isOk: false };
+        }
+      } else {
+        allData = allData.filter(item => item.__backendId !== backendId);
+        if (typeof updateAllViews === 'function') {
+          updateAllViews();
+        }
+      }
       if (result.isOk) {
+        await deleteOrderOnGoogleSheet(order.order_id);
         showToast('✓ ลบออเดอร์สำเร็จ', 'success');
       } else {
         showToast('✕ เกิดข้อผิดพลาดในการลบออเดอร์', 'error');
