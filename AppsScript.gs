@@ -26,29 +26,36 @@ const TABLE_SCHEMAS = {
 /**
  * ใช้เรียกครั้งเดียวเพื่อสร้าง/ตรวจสอบแท็บและหัวตาราง
  */
-function setupSheets() {
+function ensureSheet(tableName) {
   const ss = SpreadsheetApp.getActive();
-  Object.entries(TABLE_SCHEMAS).forEach(([tableName, headers]) => {
-    let sheet = ss.getSheetByName(tableName);
-    if (!sheet) sheet = ss.insertSheet(tableName);
-    const firstRow = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
-    const alreadyHasHeaders = headers.every((header, index) => firstRow[index] === header);
-    if (!alreadyHasHeaders) {
-      sheet.clear();
-      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      sheet.setFrozenRows(1);
-      sheet.autoResizeColumns(1, headers.length);
-    }
-  });
+  const headers = TABLE_SCHEMAS[tableName];
+  if (!headers) throw new Error(`ไม่รู้จักตาราง ${tableName}`);
+
+  let sheet = ss.getSheetByName(tableName);
+  if (!sheet) {
+    sheet = ss.insertSheet(tableName);
+  }
+
+  const firstRow = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
+  const alreadyHasHeaders = headers.every((header, index) => firstRow[index] === header);
+  if (!alreadyHasHeaders) {
+    sheet.clear();
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.setFrozenRows(1);
+    sheet.autoResizeColumns(1, headers.length);
+  }
+  return sheet;
+}
+
+function setupSheets() {
+  Object.keys(TABLE_SCHEMAS).forEach(tableName => ensureSheet(tableName));
 }
 
 /**
  * ---------- UTIL ----------
  */
 function getSheet(table) {
-  const sheet = SpreadsheetApp.getActive().getSheetByName(table);
-  if (!sheet) throw new Error(`ไม่พบตาราง ${table}`);
-  return sheet;
+  return ensureSheet(table);
 }
 
 function mapRows(sheet, schema) {
