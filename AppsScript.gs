@@ -60,7 +60,7 @@ function mapRows(sheet, schema) {
 function upsertRow(sheet, schema, payload, idField) {
   const values = sheet.getDataRange().getValues();
   let targetRow = -1;
-  const idFieldIndex = schema.indexOf(idField);
+  const idFieldIndex = idField ? schema.indexOf(idField) : -1;
   if (idField && payload[idField]) {
     for (let i = 1; i < values.length; i++) {
       if (values[i][idFieldIndex] === payload[idField]) {
@@ -69,10 +69,18 @@ function upsertRow(sheet, schema, payload, idField) {
       }
     }
   }
-  const rowValues = schema.map(key => payload[key] ?? '');
+
   if (targetRow > 0) {
-    sheet.getRange(targetRow, 1, 1, schema.length).setValues([rowValues]);
+    // Update existing row only with payload data
+    const range = sheet.getRange(targetRow, 1, 1, schema.length);
+    const existingValues = range.getValues()[0];
+    const newValues = existingValues.map((val, index) => {
+      const key = schema[index];
+      return payload.hasOwnProperty(key) ? payload[key] : val;
+    });
+    range.setValues([newValues]);
   } else {
+    const rowValues = schema.map(key => payload[key] ?? '');
     sheet.appendRow(rowValues);
     targetRow = sheet.getLastRow();
   }
@@ -142,8 +150,13 @@ function doPost(e) {
     const action = payload.action || 'save';
     const schema = TABLE_SCHEMAS[table];
     if (!schema) throw new Error('ไม่รู้จักตาราง');
-    const sheet = getSheet(table);
-    const idField = schema[0];
+    const sheet = getSheet(table);    
+    let idField = schema[0];
+
+    // Special handling for stock updates to use 'sku' as the key
+    if (table === 'products' && payload.sku) {
+      idField = 'sku';
+    }
 
     if (action === 'save') {
       payload.updated_at = new Date().toISOString();
