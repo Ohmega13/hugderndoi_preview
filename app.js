@@ -37,10 +37,19 @@ let activeDropdownKey = 'categories';
 let activeCustomerHistoryId = null;
 let currentUser = null;
 let googleSheetSyncState = {
-  firstSyncDone: false
+  firstSyncDone: false,
+  damagedFirstSyncDone: false
 };
 const USER_SESSION_KEY = 'hugderndoi-user-session';
 let lastConnectionTest = { url: '', success: false };
+
+function ensureDamageId(record) {
+  if (!record) return null;
+  if (!record.damage_id) {
+    record.damage_id = record.__backendId || `damage-${Date.now()}`;
+  }
+  return record.damage_id;
+}
 
 function cloneDefaultAccounts() {
   return defaultUsers.map((user, index) => ({
@@ -1646,6 +1655,40 @@ function mapAppProductToSheet(product) {
   };
 }
 
+function mapSheetDamagedToApp(row) {
+  const damageId = row?.damage_id || row?.id || `gs-damage-${row?.sku || Date.now()}`;
+  return {
+    type: 'damaged',
+    damage_id: damageId,
+    product_name: row?.product_name || '',
+    sku: row?.sku || '',
+    quantity: parseInt(row?.quantity, 10) || 0,
+    unit: row?.unit || 'ชิ้น',
+    damage_reason: row?.damage_reason || '',
+    cost_price: parseFloat(row?.cost_price) || 0,
+    unit_price: parseFloat(row?.unit_price) || 0,
+    created_at: row?.created_at || new Date().toISOString(),
+    updated_at: row?.updated_at || row?.created_at || new Date().toISOString(),
+    __backendId: `gs-damaged-${damageId}`
+  };
+}
+
+function mapAppDamagedToSheet(damaged) {
+  const damageId = ensureDamageId(damaged);
+  return {
+    damage_id: damageId,
+    sku: damaged.sku || '',
+    product_name: damaged.product_name || '',
+    quantity: Number(damaged.quantity) || 0,
+    unit: damaged.unit || 'ชิ้น',
+    damage_reason: damaged.damage_reason || '',
+    cost_price: Number(damaged.cost_price) || 0,
+    unit_price: Number(damaged.unit_price) || 0,
+    created_at: damaged.created_at || new Date().toISOString(),
+    updated_at: damaged.updated_at || damaged.created_at || new Date().toISOString()
+  };
+}
+
 async function syncProductsFromGoogleSheet(force = false) {
   if (!isGoogleSheetStorageActive()) return;
   if (googleSheetSyncState.firstSyncDone && !force) return;
@@ -1667,6 +1710,7 @@ async function syncExternalDataIfNeeded(force = false) {
   if (!isGoogleSheetStorageActive()) return;
   await syncProductsFromGoogleSheet(force);
   await syncCustomersFromGoogleSheet(force);
+  await syncDamagedFromGoogleSheet(force);
 }
 
 async function pushProductToGoogleSheet(product) {
@@ -1701,6 +1745,41 @@ async function deleteProductOnGoogleSheet(sku) {
   } catch (error) {
     console.error('deleteProductOnGoogleSheet failed', error);
     showToast('ลบสินค้าใน Google Sheet ไม่สำเร็จ', 'warning');
+  }
+}
+
+async function syncDamagedFromGoogleSheet(force = false) {
+  if (!isGoogleSheetStorageActive()) return;
+  if (googleSheetSyncState.damagedFirstSyncDone && !force) return;
+  try {
+    const data = await googleSheetRequest('list', 'damaged', {}, 'GET');
+    const normalized = Array.isArray(data) ? data.map(mapSheetDamagedToApp) : [];
+    allData = allData.filter(item => item.type !== 'damaged');
+    allData.push(...normalized);
+    googleSheetSyncState.damagedFirstSyncDone = true;
+    updateAllViews();
+  } catch (error) {
+    console.error('syncDamagedFromGoogleSheet failed', error);
+    showToast('เชื่อมต่อ Google Sheet (สินค้าชำรุด) ไม่สำเร็จ', 'error');
+  }
+}
+
+async function pushDamagedToGoogleSheet(damaged) {
+  if (!isGoogleSheetStorageActive()) return;
+  try {
+    await googleSheetRequest('save', 'damaged', mapAppDamagedToSheet(damaged));
+  } catch (error) {
+    console.error('pushDamagedToGoogleSheet failed', error);
+    showToast('บันทึกสินค้าชำรุดใน Google Sheet ไม่สำเร็จ', 'error');
+  }
+}
+
+async function deleteDamagedOnGoogleSheet(damageId) {
+  if (!isGoogleSheetStorageActive() || !damageId) return;
+  try {
+    await googleSheetRequest('delete', 'damaged', { id: damageId, damage_id: damageId }, 'POST');
+  } catch (error) {
+    console.error('deleteDamagedOnGoogleSheet failed', error);
   }
 }
 
@@ -3560,6 +3639,7 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
   if (editId) {
     const damaged = allData.find(d => d.__backendId === editId);
     if (damaged) {
+      ensureDamageId(damaged);
       const oldQuantity = damaged.quantity;
       const oldSku = damaged.sku;
       
@@ -3602,11 +3682,15 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
       damaged.sku = sku;
       damaged.quantity = quantity;
       damaged.damage_reason = document.getElementById('damaged-reason').value;
+      damaged.unit = product.unit;
+      damaged.cost_price = product.cost_price;
+      damaged.unit_price = product.unit_price;
       damaged.updated_at = new Date().toISOString();
 
       const result = await window.dataSdk.update(damaged);
       
       if (result.isOk) {
+        await pushDamagedToGoogleSheet(damaged);
         showToast('✓ แก้ไขสินค้าชำรุดสำเร็จ', 'success');
         document.getElementById('damaged-form').reset();
         document.getElementById('damaged-edit-id').value = '';
@@ -3627,12 +3711,16 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
 
     const damagedData = {
       type: 'damaged',
+      damage_id: `damage-${Date.now()}`,
       product_name: product.product_name,
       sku: sku,
       quantity: quantity,
       damage_reason: document.getElementById('damaged-reason').value,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      unit: product.unit,
+      cost_price: product.cost_price,
+      unit_price: product.unit_price
     };
 
     const createResult = await window.dataSdk.create(damagedData);
@@ -3644,6 +3732,7 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
       
       if (updateResult.isOk) {
         await syncProductToGoogleSheet(product);
+        await pushDamagedToGoogleSheet(damagedData);
         showToast('✓ บันทึกสินค้าชำรุดสำเร็จ', 'success');
         e.target.reset();
       } else {
@@ -4008,6 +4097,7 @@ async function deleteDamaged(backendId) {
       
       const result = await window.dataSdk.delete(damaged);
       if (result.isOk) {
+        await deleteDamagedOnGoogleSheet(ensureDamageId(damaged));
         showToast('✓ ลบสินค้าชำรุดสำเร็จ', 'success');
       } else {
         showToast('✕ เกิดข้อผิดพลาดในการลบสินค้าชำรุด', 'error');

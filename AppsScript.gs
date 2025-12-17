@@ -15,6 +15,10 @@ const TABLE_SCHEMAS = {
     'customer_id', 'name', 'phone', 'email', 'address',
     'note', 'last_order_at', 'created_at', 'updated_at'
   ],
+  damaged: [
+    'damage_id', 'sku', 'product_name', 'quantity', 'unit',
+    'damage_reason', 'cost_price', 'unit_price', 'created_at', 'updated_at'
+  ],
   dropdowns: ['group', 'value', 'emoji', 'created_at'],
   settings: ['key', 'value', 'updated_at']
 };
