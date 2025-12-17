@@ -3844,6 +3844,9 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
   
   const editId = document.getElementById('order-edit-id').value;
   const btn = document.getElementById('add-order-btn');
+  const sdk = typeof window !== 'undefined' ? window.dataSdk : null;
+  const canCreateSdk = sdk && typeof sdk.create === 'function';
+  const canUpdateSdk = sdk && typeof sdk.update === 'function';
   
   if (!editId && allData.length >= 999) {
     showToast('ถึงขีดจำกัด 999 รายการแล้ว กรุณาลบรายการเก่าก่อน', 'error');
@@ -3895,7 +3898,13 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
         if (oldProduct) {
           oldProduct.quantity += oldQuantity;
           oldProduct.updated_at = new Date().toISOString();
-          await window.dataSdk.update(oldProduct);
+          if (canUpdateSdk) {
+            try {
+              await window.dataSdk.update(oldProduct);
+            } catch (error) {
+              console.error('update product failed', error);
+            }
+          }
           await syncProductToGoogleSheet(oldProduct);
         }
         
@@ -3908,7 +3917,13 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
         
         product.quantity -= quantity;
         product.updated_at = new Date().toISOString();
-        await window.dataSdk.update(product);
+        if (canUpdateSdk) {
+          try {
+            await window.dataSdk.update(product);
+          } catch (error) {
+            console.error('update product failed', error);
+          }
+        }
         await syncProductToGoogleSheet(product);
       } else {
         const stockDiff = quantity - oldQuantity;
@@ -3921,7 +3936,13 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
         
         product.quantity -= stockDiff;
         product.updated_at = new Date().toISOString();
-        await window.dataSdk.update(product);
+        if (canUpdateSdk) {
+          try {
+            await window.dataSdk.update(product);
+          } catch (error) {
+            console.error('update product failed', error);
+          }
+        }
         await syncProductToGoogleSheet(product);
       }
 
@@ -3940,7 +3961,15 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
       order.note = customerNote;
       order.updated_at = new Date().toISOString();
 
-      const result = await window.dataSdk.update(order);
+      let result = { isOk: true };
+      if (canUpdateSdk) {
+        try {
+          result = await window.dataSdk.update(order);
+        } catch (error) {
+          console.error('update order failed', error);
+          result = { isOk: false };
+        }
+      }
       
       if (result.isOk) {
         showToast('✓ แก้ไขออเดอร์สำเร็จ', 'success');
@@ -3951,6 +3980,9 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
         document.getElementById('cancel-order-edit-btn').classList.add('hidden');
         updateCustomerSelectOptions();
         document.getElementById('order-save-customer').checked = false;
+        if (!canUpdateSdk && typeof updateAllViews === 'function') {
+          updateAllViews();
+        }
       } else {
         showToast('✕ เกิดข้อผิดพลาดในการแก้ไขออเดอร์', 'error');
       }
@@ -3982,12 +4014,32 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
       updated_at: new Date().toISOString()
     };
 
-    const createResult = await window.dataSdk.create(orderData);
+    let finalResult = { isOk: true };
+    if (canCreateSdk) {
+      try {
+        finalResult = await window.dataSdk.create(orderData);
+      } catch (error) {
+        console.error('create order failed', error);
+        finalResult = { isOk: false };
+      }
+    } else {
+      orderData.__backendId = orderData.__backendId || `offline-order-${Date.now()}`;
+      allData.push(orderData);
+      finalResult = { isOk: true };
+    }
     
-    if (createResult.isOk) {
+    if (finalResult.isOk) {
       product.quantity -= quantity;
       product.updated_at = new Date().toISOString();
-      const updateResult = await window.dataSdk.update(product);
+      let updateResult = { isOk: true };
+      if (canUpdateSdk) {
+        try {
+          updateResult = await window.dataSdk.update(product);
+        } catch (error) {
+          console.error('update product failed', error);
+          updateResult = { isOk: false };
+        }
+      }
       
       if (updateResult.isOk) {
         await syncProductToGoogleSheet(product);
@@ -3995,6 +4047,9 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
         e.target.reset();
         updateCustomerSelectOptions();
         document.getElementById('order-save-customer').checked = false;
+        if (!canCreateSdk && typeof updateAllViews === 'function') {
+          updateAllViews();
+        }
       } else {
         showToast('⚠️ สร้างออเดอร์สำเร็จ แต่ไม่สามารถอัพเดทสต๊อกได้', 'warning');
       }
