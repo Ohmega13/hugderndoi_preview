@@ -1679,6 +1679,20 @@ async function pushProductToGoogleSheet(product) {
   }
 }
 
+async function syncProductToGoogleSheet(product) {
+  if (!product || !isGoogleSheetStorageActive()) {
+    return true;
+  }
+  try {
+    await pushProductToGoogleSheet(product);
+    return true;
+  } catch (error) {
+    console.error('syncProductToGoogleSheet failed', error);
+    showToast(`✕ ไม่สามารถอัปเดต Google Sheet: ${error.message}`, 'error');
+    return false;
+  }
+}
+
 async function deleteProductOnGoogleSheet(sku) {
   if (!isGoogleSheetStorageActive()) return;
   try {
@@ -3410,7 +3424,7 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
           if (!sdkAvailable && typeof updateAllViews === 'function') {
             updateAllViews();
           }
-          await pushProductToGoogleSheet(product);
+          await syncProductToGoogleSheet(product);
         } else {
           showToast('✕ เกิดข้อผิดพลาดในการแก้ไขสินค้า', 'error');
         }
@@ -3494,7 +3508,7 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
         container.style.display = 'none';
         icon.textContent = '▶';
         icon.style.transform = 'rotate(-90deg)';
-        await pushProductToGoogleSheet(productData);
+        await syncProductToGoogleSheet(productData);
       } else {
         console.warn('window.dataSdk.create failed, using offline fallback');
         pushOfflineRecord();
@@ -3507,7 +3521,7 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
         icon.style.transform = 'rotate(-90deg)';
       }
 
-      await pushProductToGoogleSheet(productData);
+      await syncProductToGoogleSheet(productData);
     }
   } catch (error) {
     console.error('Unexpected error in product form', error);
@@ -3555,6 +3569,7 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
           oldProduct.quantity += oldQuantity;
           oldProduct.updated_at = new Date().toISOString();
           await window.dataSdk.update(oldProduct);
+          await syncProductToGoogleSheet(oldProduct);
         }
         
         if (quantity > product.quantity) {
@@ -3567,6 +3582,7 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
         product.quantity -= quantity;
         product.updated_at = new Date().toISOString();
         await window.dataSdk.update(product);
+        await syncProductToGoogleSheet(product);
       } else {
         const stockDiff = quantity - oldQuantity;
         if (stockDiff > product.quantity) {
@@ -3579,6 +3595,7 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
         product.quantity -= stockDiff;
         product.updated_at = new Date().toISOString();
         await window.dataSdk.update(product);
+        await syncProductToGoogleSheet(product);
       }
 
       damaged.product_name = product.product_name;
@@ -3626,6 +3643,7 @@ document.getElementById('damaged-form').addEventListener('submit', async (e) => 
       const updateResult = await window.dataSdk.update(product);
       
       if (updateResult.isOk) {
+        await syncProductToGoogleSheet(product);
         showToast('✓ บันทึกสินค้าชำรุดสำเร็จ', 'success');
         e.target.reset();
       } else {
@@ -3737,6 +3755,7 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
           oldProduct.quantity += oldQuantity;
           oldProduct.updated_at = new Date().toISOString();
           await window.dataSdk.update(oldProduct);
+          await syncProductToGoogleSheet(oldProduct);
         }
         
         if (quantity > product.quantity) {
@@ -3749,6 +3768,7 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
         product.quantity -= quantity;
         product.updated_at = new Date().toISOString();
         await window.dataSdk.update(product);
+        await syncProductToGoogleSheet(product);
       } else {
         const stockDiff = quantity - oldQuantity;
         if (stockDiff > product.quantity) {
@@ -3761,6 +3781,7 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
         product.quantity -= stockDiff;
         product.updated_at = new Date().toISOString();
         await window.dataSdk.update(product);
+        await syncProductToGoogleSheet(product);
       }
 
       order.order_id = document.getElementById('order-id').value;
@@ -3828,6 +3849,7 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
       const updateResult = await window.dataSdk.update(product);
       
       if (updateResult.isOk) {
+        await syncProductToGoogleSheet(product);
         showToast('✓ สร้างออเดอร์สำเร็จ', 'success');
         e.target.reset();
         updateCustomerSelectOptions();
@@ -3946,6 +3968,7 @@ async function deleteOrder(backendId) {
         product.quantity += order.quantity;
         product.updated_at = new Date().toISOString();
         await window.dataSdk.update(product);
+        await syncProductToGoogleSheet(product);
       }
       
       const result = await window.dataSdk.delete(order);
@@ -3980,6 +4003,7 @@ async function deleteDamaged(backendId) {
         product.quantity += damaged.quantity;
         product.updated_at = new Date().toISOString();
         await window.dataSdk.update(product);
+        await syncProductToGoogleSheet(product);
       }
       
       const result = await window.dataSdk.delete(damaged);
@@ -4818,6 +4842,7 @@ document.getElementById('add-stock-form').addEventListener('submit', async (e) =
     if (!sdkAvailable && typeof updateAllViews === 'function') {
       updateAllViews();
     }
+    await syncProductToGoogleSheet(product);
 
     showToast(`✓ เพิ่มสต๊อก ${product.product_name} จำนวน ${quantity} ${product.unit || 'ชิ้น'} สำเร็จ`, 'success');
     e.target.reset();

@@ -63,7 +63,7 @@ function upsertRow(sheet, schema, payload, idField) {
   const idFieldIndex = idField ? schema.indexOf(idField) : -1;
   if (idField && payload[idField]) {
     for (let i = 1; i < values.length; i++) {
-      if (values[i][idFieldIndex] === payload[idField]) {
+      if (values[i][idFieldIndex] == payload[idField]) {
         targetRow = i + 1;
         break;
       }
