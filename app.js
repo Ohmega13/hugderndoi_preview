@@ -1675,7 +1675,7 @@ async function pushProductToGoogleSheet(product) {
     await googleSheetRequest('save', 'products', mapAppProductToSheet(product));
   } catch (error) {
     console.error('pushProductToGoogleSheet failed', error);
-    showToast('เชื่อม Google Sheet ไม่สำเร็จ (สินค้า)', 'warning');
+    throw error;
   }
 }
 
