@@ -122,7 +122,7 @@ const defaultSettings = {
   companyInfo: {
     companyName: 'ฮักเดินดอย',
     systemTitle: 'ระบบจัดการสต๊อก',
-    defaultUser: 'โอห์ม',
+    defaultUser: 'ผู้ใช้',
     defaultRole: 'ผู้ดูแลระบบ'
   },
   theme: {
@@ -164,7 +164,7 @@ const defaultSettings = {
   users: [
     {
       id: 'user-owner',
-      name: 'โอห์ม',
+      name: 'ผู้ใช้',
       role: 'ผู้ดูแลระบบ',
       status: 'active'
     }
